@@ -1,12 +1,16 @@
 FROM php:8.0-apache
 
-# Enable Apache rewrite module
+# 1. Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Install mysqli dependencies and extension
+# 2. Update and install required system libraries
 RUN apt-get update && apt-get install -y \
+    libmariadb-dev-compat \
     libmariadb-dev \
-    && docker-php-ext-install mysqli \
-    && docker-php-ext-enable mysqli
+    && rm -rf /var/lib/apt/lists/*
 
+# 3. Install and configure mysqli specifically
+RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
+
+# 4. Copy your project files
 COPY . /var/www/html/
