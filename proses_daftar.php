@@ -1,5 +1,5 @@
 <?php
-// Increase memory and time limits for large PDF uploads
+// Increase limits for file handling
 ini_set('memory_limit', '256M');
 ini_set('upload_max_filesize', '20M');
 ini_set('post_max_size', '20M');
@@ -20,31 +20,28 @@ if (isset($_POST['btn_simpan'])) {
     $perkara = $_POST['perkara'] ?? '';
     $target_role = $_POST['target_role'] ?? 'pengarah';
     
-    // 1. Upload File (Check size/type)
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
 
-        // 2. Insert to Database
+        // Insert into database
         $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, daripada, perkara, fail_surat, target_role, status) VALUES (?, ?, ?, ?, ?, 'BARU')");
         $null = NULL;
         $stmt->bind_param("sssss", $no_rujukan, $daripada, $perkara, $null, $target_role);
         $stmt->send_long_data(3, $file_data);
 
         if ($stmt->execute()) {
-            // 3. Send Email
+            // Mailtrap Integration
             $mail = new PHPMailer(true);
             try {
-                // DEBUGGING: Remove 'SMTPDebug' = 2 once it works!
                 $mail->isSMTP();
-                $mail->SMTPDebug = 2; 
-                $mail->Host       = 'smtp.gmail.com';
+                $mail->Host       = 'sandbox.smtp.mailtrap.io'; // From Mailtrap SMTP settings
                 $mail->SMTPAuth   = true;
-                $mail->Username   = 'saigayu1605@gmail.com'; 
-                $mail->Password   = 'sspxgfwadkfghbfs'; // Ensure this is a valid App Password
+                $mail->Username   = '8bcee3755ce00c'; // REPLACE WITH YOUR MAILTRAP USERNAME
+                $mail->Password   = 'f3ad70a431130e'; // REPLACE WITH YOUR MAILTRAP PASSWORD
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port       = 587;
 
-                $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Surat');
+                $mail->setFrom('no-reply@yourdomain.com', 'Sistem Minit Surat');
                 $mail->addAddress('admin@kkkb.edu.my'); 
                 $mail->Subject = "NOTIFIKASI: Surat Baharu - " . $no_rujukan;
                 $mail->Body    = "Surat baharu telah didaftarkan dalam sistem.";
@@ -58,7 +55,7 @@ if (isset($_POST['btn_simpan'])) {
             echo "DB Error: " . $stmt->error;
         }
     } else {
-        echo "Sila muat naik fail.";
+        echo "<script>alert('Sila muat naik fail PDF!'); window.history.back();</script>";
     }
 }
 ?>
