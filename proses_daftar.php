@@ -40,7 +40,7 @@ if (isset($_POST['btn_simpan'])) {
                 $mail->Host       = 'smtp.gmail.com';
                 $mail->SMTPAuth   = true;
                 $mail->Username   = 'saigayu1605@gmail.com'; 
-                $mail->Password   = 'aewm gplr ochy hesq'; // Ensure this is a valid App Password
+                $mail->Password   = 'sspxgfwadkfghbfs'; // Ensure this is a valid App Password
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port       = 587;
 
