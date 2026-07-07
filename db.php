@@ -1,12 +1,12 @@
 <?php
-// DO NOT CHANGE THESE KEYS. They point to your Render Dashboard settings.
-$host = getenv('mysql-aae9a8-minitsurat123.c.aivencloud.com');
-$user = getenv('avnadmin');
+// These are the names of the variables set in your Render Dashboard
+$host = getenv('DB_HOST');
+$user = getenv('DB_USER');
 $pass = getenv('DB_PASSWORD');
-$db   = getenv('defaultdb');
-$port = getenv('22408');
+$db   = getenv('DB_NAME');
+$port = getenv('DB_PORT');
 
-// If this prints, it means you haven't set the variables in the Render Dashboard yet
+// If one of these is missing, it will tell you in the browser
 if (!$host || !$user || !$pass || !$db || !$port) {
     die("Error: Please set all 5 Environment Variables (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT) in your Render Dashboard.");
 }
