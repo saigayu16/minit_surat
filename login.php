@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Jika sudah login, halang masuk semula ke login page dan redirect ke dashboard yang betul
+// 1. If already logged in, redirect
 if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) {
     $role = $_SESSION['user_role'] ?? '';
     
@@ -16,6 +16,12 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
     exit;
 }
 ?>
+
+<!-- 2. ADD THIS RIGHT HERE: Error handling snippet -->
+<?php if(isset($_GET['error'])): ?>
+    <script>alert('Nama pengguna, kata laluan, atau peranan salah!');</script>
+<?php endif; ?>
+
 <!DOCTYPE html>
 <html lang="ms">
 <head>
