@@ -27,12 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         $mail->isSMTP();
         // Render akan baca nilai dari "Environment" di dashboard
-        $mail->Host       = getenv('BREVO_HOST'); 
+        $mail->Host       = getenv('SMTP_HOST'); 
         $mail->SMTPAuth   = true;
-        $mail->Username   = getenv('BREVO_USER');
-        $mail->Password   = getenv('BREVO_PASS'); 
+        $mail->Username   = getenv('SMTP_USER');
+        $mail->Password   = getenv('SMTP_PASS'); 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = (int)getenv('BREVO_PORT');
+        $mail->Port       = (int)getenv('SMTP_PORT');
         $mail->Timeout    = 15;
 
         $mail->setFrom('sistem@minitdigital.com', 'Sistem Minit Digital');
