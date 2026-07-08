@@ -1,25 +1,27 @@
 <?php
-// 1. Ambil nilai dan pastikan tiada ruang kosong yang tidak sengaja (trim)
+// Ambil data dari Environment Variable
 $host = trim(getenv('DB_HOST'));
 $user = trim(getenv('DB_USER'));
 $pass = trim(getenv('DB_PASSWORD'));
 $db   = trim(getenv('DB_NAME'));
-$port = (int)getenv('DB_PORT'); // Tukar kepada integer untuk port
+$port = (int)getenv('DB_PORT');
 
-// 2. Semakan untuk memastikan variabel wujud
-if (empty($host) || empty($user) || empty($db) || empty($port)) {
-    die("Error: Sila pastikan DB_HOST, DB_USER, DB_NAME, dan DB_PORT telah ditetapkan dalam Render Dashboard.");
+// SEMAKAN DIAGNOSTIK
+if (empty($host)) {
+    die("CRITICAL ERROR: DB_HOST tidak dijumpai. Sila semak 'Environment' di Render Dashboard.");
 }
 
-// 3. Sambungan MySQLi
-$conn = new mysqli($host, $user, $pass, $db, $port);
+// Cuba sambung
+mysqli_report(MYSQLI_REPORT_OFF); // Matikan error biasa untuk kita tangkap sendiri
+$conn = @new mysqli($host, $user, $pass, $db, $port);
 
-// 4. Periksa sambungan
 if ($conn->connect_error) {
-    // Sembunyikan $pass dalam mesej ralat untuk keselamatan
-    die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error . " <br><br> 
+    Punca mungkin: 
+    1. Alamat HOST salah. 
+    2. IP Render tidak dibenarkan oleh Aiven. 
+    3. Port salah.");
 }
 
-// Set charset kepada utf8mb4 supaya tiada ralat aksara
 $conn->set_charset("utf8mb4");
 ?>
