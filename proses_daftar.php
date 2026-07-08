@@ -24,15 +24,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 3. Proses Fail
-    if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
-        $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
-        $file_name = $_FILES['fail_surat']['name'];
-        $base64_file = base64_encode($file_data);
-    } else {
-        echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
-        exit;
-    }
+    // 3. Proses Fail (Simpan terus sebagai Binary ke Database)
+if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
+    $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
+    
+    // Pastikan column 'fail_surat' dalam database adalah jenis LONGBLOB
+    // Kita gunakan ? sebagai placeholder untuk data binari
+    $stmt = $conn->prepare("UPDATE minit_surat SET fail_surat = ? WHERE id = ?");
+    
+    // Bind parameter: "b" bermaksud binary, "i" bermaksud integer (id)
+    $null = NULL;
+    $stmt->bind_param("bi", $null, $id);
+    $stmt->send_long_data(0, $file_data); // Menghantar data fail yang besar
+    $stmt->execute();
+    
+} else {
+    echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
+    exit;
+}
 
     // 4. Hantar Emel guna Brevo API
     $api_key = getenv('BREVO_API_KEY');
