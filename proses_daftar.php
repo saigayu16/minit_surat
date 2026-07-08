@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // 4. Hantar Emel guna Brevo API
     $api_key = getenv('BREVO_API_KEY');
     $data = [
-        "sender" => ["email" => "no-reply@sistemanda.com", "name" => "Sistem Minit Digital"],
+        "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
         "to" => [["email" => $email_penerima]],
         "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
         "htmlContent" => "Hai, terdapat surat baharu untuk tindakan anda ($target_role).<br><br>Perkara: $perkara",
