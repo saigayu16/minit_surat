@@ -42,7 +42,7 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
     <div class="panel">
         <h3><i class="fa-solid fa-file-pdf"></i> Dokumen Rujukan</h3>
         <!-- Guna papar_fail.php untuk elak ralat Forbidden -->
-        <iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="600px" style="border:none;"></iframe>
+       <iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="600px" style="border:none;"></iframe>
     </div>
 
     <div class="panel">
