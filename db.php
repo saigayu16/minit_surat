@@ -1,26 +1,20 @@
 <?php
-// Ambil data dari Environment Variable
 $host = trim(getenv('DB_HOST'));
 $user = trim(getenv('DB_USER'));
 $pass = trim(getenv('DB_PASSWORD'));
 $db   = trim(getenv('DB_NAME'));
 $port = (int)getenv('DB_PORT');
 
-// SEMAKAN DIAGNOSTIK
-if (empty($host)) {
-    die("CRITICAL ERROR: DB_HOST tidak dijumpai. Sila semak 'Environment' di Render Dashboard.");
-}
+// Inisialisasi mysqli
+$conn = mysqli_init();
 
-// Cuba sambung
-mysqli_report(MYSQLI_REPORT_OFF); // Matikan error biasa untuk kita tangkap sendiri
-$conn = @new mysqli($host, $user, $pass, $db, $port);
+// PENTING: Tambah SSL untuk Aiven
+// Aiven perlukan SSL, kita set MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT 
+// untuk tujuan ujian supaya sambungan tidak gagal kerana sijil
+$conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error . " <br><br> 
-    Punca mungkin: 
-    1. Alamat HOST salah. 
-    2. IP Render tidak dibenarkan oleh Aiven. 
-    3. Port salah.");
+if (!$conn->real_connect($host, $user, $pass, $db, $port, NULL, MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT)) {
+    die("Connection failed: " . mysqli_connect_error());
 }
 
 $conn->set_charset("utf8mb4");
