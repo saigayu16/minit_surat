@@ -24,24 +24,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 3. Proses Fail (Simpan terus sebagai Binary ke Database)
-if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
-    $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
-    
-    // Pastikan column 'fail_surat' dalam database adalah jenis LONGBLOB
-    // Kita gunakan ? sebagai placeholder untuk data binari
-    $stmt = $conn->prepare("UPDATE minit_surat SET fail_surat = ? WHERE id = ?");
-    
-    // Bind parameter: "b" bermaksud binary, "i" bermaksud integer (id)
-    $null = NULL;
-    $stmt->bind_param("bi", $null, $id);
-    $stmt->send_long_data(0, $file_data); // Menghantar data fail yang besar
-    $stmt->execute();
-    
-} else {
-    echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
-    exit;
-}
+    // 3. Proses Fail (Simpan sebagai Binary & Base64 untuk E-mel)
+    if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
+        $file_name = $_FILES['fail_surat']['name'];
+        $file_tmp = $_FILES['fail_surat']['tmp_name'];
+        
+        // Baca fail untuk database (Binary)
+        $file_data = file_get_contents($file_tmp);
+        
+        // Baca dan tukar ke base64 untuk API Brevo
+        $file_content = file_get_contents($file_tmp);
+        $base64_file = base64_encode($file_content);
+    } else {
+        echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
+        exit;
+    }
 
     // 4. Hantar Emel guna Brevo API
     $api_key = getenv('BREVO_API_KEY');
@@ -49,7 +46,7 @@ if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
         "to" => [["email" => $email_penerima]],
         "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "Assalamualaikum dan Salam Sejahtera, terdapat surat baharu untuk tindakan anda. Boleh access MinitSurat untuk tandatangan. Sekian terima kasih.S($target_role).<br><br>Perkara: $perkara",
+        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda. Sila log masuk ke sistem.<br><br>Perkara: $perkara",
         "attachment" => [["content" => $base64_file, "name" => $file_name]]
     ];
 
@@ -62,15 +59,16 @@ if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
+    // 5. Simpan ke Database jika Emel Berjaya (HTTP 201)
     if ($http_code == 201) {
-        // PERBAIKAN: Masukkan $file_data ke dalam database
         $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, fail_surat) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
         $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $file_data);
         $stmt->execute();
         
         echo "<script>alert('Berjaya dihantar kepada $target_role'); window.location='homeadmin.php';</script>";
     } else {
-        echo "<script>alert('E-mel gagal (Ralat API: $http_code). Pastikan API Key betul.'); window.history.back();</script>";
+        // Outputkan ralat API untuk bantu anda tahu punca ralat
+        echo "<script>alert('E-mel gagal (Ralat API: $http_code). Pastikan API Key betul. Ralat: $response'); window.history.back();</script>";
     }
 }
 ?>
