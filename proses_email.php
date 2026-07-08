@@ -1,5 +1,5 @@
 <?php
-require_once('vendor/autoload.php'); // Pastikan library Brevo dimuat naik
+require_once __DIR__ . '/vendor/autoload.php'; // Pastikan library Brevo dimuat naik
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
