@@ -86,9 +86,9 @@ $fail_path = 'uploads/' . htmlspecialchars($row['fail_surat'] ?? '');
 
 <div class="document-view-box no-print">
     <div style="padding: 10px; background: #f1f5f9; border-bottom: 1px solid #ddd; font-size: 12px; font-weight: bold;">
-        <i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL: <?= $nama_fail ?>
+        <i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL
     </div>
-    <iframe src="<?= $fail_path ?>" width="100%" height="100%" frameborder="0"></iframe>
+    <iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="100%" frameborder="0"></iframe>
 </div>
 
 <div class="page-box">
