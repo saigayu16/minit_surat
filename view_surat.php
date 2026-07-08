@@ -47,8 +47,7 @@ $row = $result->fetch_assoc();
 <div class="wrapper">
     <div class="card">
         <h3>📄 Dokumen Asal</h3>
-        <iframe src="papar_fail.php?id=<?= $row['id'] ?>" width="100%" height="600px" style="border:1px solid #ddd;"></iframe>
-    </div>
+<iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="800px" style="border:none;"></iframe>    </div>
 
     <div class="card">
         <div class="minit-header">
