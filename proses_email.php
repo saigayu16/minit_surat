@@ -31,19 +31,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 3. Setup & Hantar E-mel
+    // 3. Setup & Hantar E-mel (Menggunakan Brevo)
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = getenv('sandbox.smtp.mailtrap.io');
+        $mail->Host       = getenv('BREVO_HOST'); 
         $mail->SMTPAuth   = true;
-        $mail->Username   = getenv('8bcee3755ce00c');
-        $mail->Password   = getenv('f3ad70a431130e');
+        $mail->Username   = getenv('BREVO_USER');
+        $mail->Password   = getenv('BREVO_PASS');
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = (int)getenv('MAIL_PORT');
-        $mail->Timeout    = 15; // Had masa 15 saat
+        $mail->Port       = (int)getenv('BREVO_PORT');
+        $mail->Timeout    = 20; 
 
-        $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Digital');
+        $mail->setFrom('sistem@minitdigital.com', 'Sistem Minit Digital');
         $mail->addAddress($email);
         $mail->addStringAttachment($file_data, $file_name);
         $mail->isHTML(true);
@@ -57,9 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param("ss", $nama_staf, $id);
         $stmt->execute();
 
-        echo "<script>alert('Berjaya!'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('E-mel berjaya dihantar!'); window.location='homeadmin.php';</script>";
             
     } catch (Exception $e) {
+        // Output ralat untuk debugging
         echo "<script>alert('E-mel gagal: " . addslashes($mail->ErrorInfo) . "'); window.history.back();</script>";
     }
 }
