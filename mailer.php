@@ -12,6 +12,7 @@ function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64
         "htmlContent" => $content
     ];
 
+    // Jika ada lampiran (attachment), tambah ke dalam data
     if ($attachment_base64 && $file_name) {
         $data["attachment"] = [["content" => $attachment_base64, "name" => $file_name]];
     }
@@ -26,6 +27,7 @@ function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
+    // Return true jika berjaya (HTTP 201 Created)
     return ($http_code == 201);
 }
 ?>
