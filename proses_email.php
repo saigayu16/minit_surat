@@ -10,57 +10,47 @@ include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['surat_id'];
-    $email = $_POST['email'];
+    $email_input = $_POST['email'];
     $nama_staf = $_POST['nama_staf'];
 
-    // 1. Semakan Staf
-    $stmt_check = $conn->prepare("SELECT nama FROM staff WHERE email = ? AND nama = ?");
-    $stmt_check->bind_param("ss", $email, $nama_staf);
+    // 1. Semakan Staf (Mesti wujud dalam database)
+    $stmt_check = $conn->prepare("SELECT email FROM staff WHERE email = ? AND nama = ?");
+    $stmt_check->bind_param("ss", $email_input, $nama_staf);
     $stmt_check->execute();
     if ($stmt_check->get_result()->num_rows === 0) {
         echo "<script>alert('Ralat: Maklumat staf tidak sah!'); window.history.back();</script>";
         exit;
     }
 
-    // 2. Proses Fail
-    if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
-        $file_data = file_get_contents($_FILES['dokumen_minit']['tmp_name']);
-        $file_name = $_FILES['dokumen_minit']['name'];
-    } else {
-        echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
-        exit;
-    }
-
-    // 3. Setup & Hantar E-mel (Menggunakan Brevo)
+    // 2. Setup PHPMailer menggunakan Environment Variables
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
+        // Render akan baca nilai dari "Environment" di dashboard
         $mail->Host       = getenv('BREVO_HOST'); 
         $mail->SMTPAuth   = true;
         $mail->Username   = getenv('BREVO_USER');
-        $mail->Password   = getenv('BREVO_PASS');
+        $mail->Password   = getenv('BREVO_PASS'); 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = (int)getenv('BREVO_PORT');
-        $mail->Timeout    = 20; 
+        $mail->Timeout    = 15;
 
         $mail->setFrom('sistem@minitdigital.com', 'Sistem Minit Digital');
-        $mail->addAddress($email);
-        $mail->addStringAttachment($file_data, $file_name);
+        $mail->addAddress($email_input);
         $mail->isHTML(true);
         $mail->Subject = 'Notifikasi Minit Surat';
-        $mail->Body    = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.";
+        $mail->Body    = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini.";
 
         $mail->send();
 
-        // 4. Kemaskini Database
+        // 3. Kemaskini Database
         $stmt = $conn->prepare("UPDATE minit_surat SET status = 'DIMAKLUM', maklum_kepada = ? WHERE id = ?");
-        $stmt->bind_param("ss", $nama_staf, $id);
+        $stmt->bind_param("si", $nama_staf, $id);
         $stmt->execute();
 
-        echo "<script>alert('E-mel berjaya dihantar!'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('Berjaya!'); window.location='homeadmin.php';</script>";
             
     } catch (Exception $e) {
-        // Output ralat untuk debugging
         echo "<script>alert('E-mel gagal: " . addslashes($mail->ErrorInfo) . "'); window.history.back();</script>";
     }
 }
