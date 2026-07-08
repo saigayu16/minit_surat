@@ -9,27 +9,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $daripada = $_POST['daripada'];
     $perkara = $_POST['perkara'];
     $kolej = $_POST['kolej'];
-    $target_role = $_POST['target_role']; // Contoh: 'pengarah'
+    $target_role = $_POST['target_role'];
     
-    // 2. Ambil emel penerima dari database berdasarkan role
+    // 2. Ambil emel penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
     $stmt_email->bind_param("s", $target_role);
     $stmt_email->execute();
     $result = $stmt_email->get_result();
     
     if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $email_penerima = $row['email'];
+        $email_penerima = $result->fetch_assoc()['email'];
     } else {
-        echo "<script>alert('Ralat: Tiada emel ditemui untuk role $target_role'); window.history.back();</script>";
+        echo "<script>alert('Ralat: Tiada emel untuk role $target_role'); window.history.back();</script>";
         exit;
     }
 
-    // 3. Proses Fail (Simpan ke DB)
+    // 3. Proses Fail
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
-        $base64_file = base64_encode($file_data);
         $file_name = $_FILES['fail_surat']['name'];
+        $base64_file = base64_encode($file_data);
     } else {
         echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
         exit;
@@ -55,14 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     curl_close($ch);
 
     if ($http_code == 201) {
-        // Jika emel berjaya, baru insert ke database
-        $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status) VALUES (?, ?, ?, ?, ?, ?, 'BARU')");
-        $stmt->bind_param("ssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role);
+        // PERBAIKAN: Masukkan $file_data ke dalam database
+        $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, fail_surat) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
+        $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $file_data);
         $stmt->execute();
         
-        echo "<script>alert('Berjaya dihantar kepada $target_role ($email_penerima)'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('Berjaya dihantar kepada $target_role'); window.location='homeadmin.php';</script>";
     } else {
-        echo "<script>alert('E-mel gagal dihantar. Ralat API: $http_code'); window.history.back();</script>";
+        echo "<script>alert('E-mel gagal (Ralat API: $http_code). Pastikan API Key betul.'); window.history.back();</script>";
     }
 }
 ?>
