@@ -3,13 +3,13 @@ session_start();
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil data dari borang
-    $no_rujukan = $_POST['no_rujukan'];
-    $tarikh_terima = $_POST['tarikh_terima'];
-    $daripada = $_POST['daripada'];
-    $perkara = $_POST['perkara'];
-    $kolej = $_POST['kolej'];
-    $target_role = $_POST['target_role'];
+    // 1. Ambil data dari borang & bersihkan (Sanitization)
+    $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan']);
+    $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima']);
+    $daripada = mysqli_real_escape_string($conn, $_POST['daripada']);
+    $perkara = mysqli_real_escape_string($conn, $_POST['perkara']);
+    $kolej = mysqli_real_escape_string($conn, $_POST['kolej']);
+    $target_role = mysqli_real_escape_string($conn, $_POST['target_role']);
     
     // 2. Ambil emel penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
@@ -24,17 +24,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 3. Proses Fail (Simpan sebagai Binary & Base64 untuk E-mel)
+    // 3. Proses Fail
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
+        // TAMBAHAN: Limit saiz fail (Contoh: 10MB)
+        if ($_FILES['fail_surat']['size'] > 10485760) {
+            echo "<script>alert('Ralat: Fail terlalu besar (Had 10MB).'); window.history.back();</script>";
+            exit;
+        }
+
         $file_name = $_FILES['fail_surat']['name'];
         $file_tmp = $_FILES['fail_surat']['tmp_name'];
-        
-        // Baca fail untuk database (Binary)
         $file_data = file_get_contents($file_tmp);
-        
-        // Baca dan tukar ke base64 untuk API Brevo
-        $file_content = file_get_contents($file_tmp);
-        $base64_file = base64_encode($file_content);
+        $base64_file = base64_encode($file_data);
     } else {
         echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
         exit;
@@ -57,18 +58,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    // TAMBAHAN: Semak error curl
+    if(curl_errno($ch)) {
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+        echo "<script>alert('CURL Error: $curl_error'); window.history.back();</script>";
+        exit;
+    }
     curl_close($ch);
 
     // 5. Simpan ke Database jika Emel Berjaya (HTTP 201)
-    if ($http_code == 201) {
+    if ($http_code == 201 || $http_code == 200) {
         $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, fail_surat) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
         $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $file_data);
         $stmt->execute();
         
         echo "<script>alert('Berjaya dihantar kepada $target_role'); window.location='homeadmin.php';</script>";
     } else {
-        // Outputkan ralat API untuk bantu anda tahu punca ralat
-        echo "<script>alert('E-mel gagal (Ralat API: $http_code). Pastikan API Key betul. Ralat: $response'); window.history.back();</script>";
+        // Outputkan ralat API dengan lebih jelas
+        $error_msg = htmlspecialchars($response);
+        echo "<script>alert('E-mel gagal (Ralat API: $http_code). Ralat: $error_msg'); window.history.back();</script>";
     }
 }
 ?>
