@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 2. Proses Fail (SIMPAN KE DATABASE BUKAN FOLDER UNTUK RENDER)
+    // 2. Proses Fail
     if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
         $file_data = file_get_contents($_FILES['dokumen_minit']['tmp_name']);
         $file_name = $_FILES['dokumen_minit']['name'];
@@ -31,25 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 3. Setup & Hantar E-mel (GUNAKAN BREVO SMTP RELAY)
+    // 3. Setup & Hantar E-mel
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = 'sandbox.smtp.mailtrap.io'; // From your screenshot
+        $mail->Host       = getenv('sandbox.smtp.mailtrap.io');
         $mail->SMTPAuth   = true;
-        $mail->Username   = '8bcee3755ce00c';           // From your screenshot
-        $mail->Password   = 'f3ad70a431130e';// Click the eye icon next to the asterisks to see the real password
+        $mail->Username   = getenv('8bcee3755ce00c');
+        $mail->Password   = getenv('f3ad70a431130e');
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587; // You can use 2525 or 587
-        $mail->setFrom('no-reply@sistemanda.com', 'Sistem Minit Digital');
-        $mail->addAddress($email);
-        
-        // Add attachment from string (binary data from database)
-        $mail->addStringAttachment($file_data, $file_name);
+        $mail->Port       = (int)getenv('MAIL_PORT');
+        $mail->Timeout    = 15; // Had masa 15 saat
 
+        $mail->setFrom('no-reply@minitsurat.com', 'Sistem Minit Digital');
+        $mail->addAddress($email);
+        $mail->addStringAttachment($file_data, $file_name);
         $mail->isHTML(true);
         $mail->Subject = 'Notifikasi Minit Surat';
-        $mail->Body    = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.<br><br>Terima kasih.";
+        $mail->Body    = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.";
 
         $mail->send();
 
@@ -59,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
 
         echo "<script>alert('Berjaya!'); window.location='homeadmin.php';</script>";
-              
+            
     } catch (Exception $e) {
         echo "<script>alert('E-mel gagal: " . addslashes($mail->ErrorInfo) . "'); window.history.back();</script>";
     }
