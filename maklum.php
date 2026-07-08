@@ -90,8 +90,8 @@
         <div class="pin"></div>
         <h3><i class="fa-solid fa-note-sticky"></i> Nota Makluman</h3>
         
-        <form action="proses_email.php" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="surat_id" value="<?= htmlspecialchars($id) ?>">
+       <form action="proses_admin_email.php" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="surat_id" value="<?= htmlspecialchars($id) ?>">
             
             <div class="form-group">
                 <label>Nama Staf:</label>
