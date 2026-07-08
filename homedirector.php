@@ -103,11 +103,12 @@ if($count_kkkb) $total_kepala_batas = $count_kkkb->fetch_assoc()['total'];
                             <td style='font-style:italic; color:#64748b;'>$catatan_pendek</td>
                             <td>";
                         
-                        if (strcasecmp($status, 'SELESAI') == 0) {
-                            echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
-                        } else {
-                            echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign"><i class="fa-solid fa-pen-nib"></i> Sahkan</a>';
-                        }
+                        // Pastikan kod ini wujud dalam gelung (loop) jadual anda
+                    if (strcasecmp($status, 'SELESAI') == 0) {
+                        echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
+                    } else {
+                        echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign"><i class="fa-solid fa-pen-nib"></i> Sahkan</a>';
+                    }
                         echo "</td></tr>";
                     }
                 } else {
