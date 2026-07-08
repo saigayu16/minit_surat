@@ -2,37 +2,29 @@
 session_start();
 include('db.php');
 
-if (!isset($_POST['id']) || !isset($_POST['image'])) {
-    die("error: Data tidak lengkap.");
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = intval($_POST['id']);
+    $catatan = $_POST['catatan'] ?? '';
+    $arahan = $_POST['arahan_pilihan'] ?? '';
+    $dataURL = $_POST['image'];
 
-$id = intval($_POST['id']);
-$catatan = $_POST['catatan'] ?? '';
-$arahan = $_POST['arahan_pilihan'] ?? '';
+    // Convert base64 kepada binary
+    $parts = explode(',', $dataURL);
+    $bin_tandatangan = base64_decode($parts[1]);
 
-// Tukar data URL imej kepada binary
-$dataURL = $_POST['image'];
-$parts = explode(',', $dataURL);
-$bin_tandatangan = base64_decode($parts[1]);
+    // Update database
+    $stmt = $conn->prepare("UPDATE minit_surat SET tandatangan_data=?, catatan=?, arahan_pilihan=?, status='SELESAI' WHERE id=?");
+    
+    if (!$stmt) {
+        die("Ralat Database: " . $conn->error);
+    }
 
-// Guna Prepared Statement dengan betul
-$sql = "UPDATE minit_surat SET tandatangan_data=?, catatan=?, arahan_pilihan=?, status='SELESAI' WHERE id=?";
-$stmt = $conn->prepare($sql);
+    $stmt->bind_param("sssi", $bin_tandatangan, $catatan, $arahan, $id);
 
-if (!$stmt) {
-    die("error: Database prepare failed: " . $conn->error);
-}
-
-// "sssi" bermaksud: 3 string (data ttd, catatan, arahan) dan 1 integer (id)
-$stmt->bind_param("sssi", $bin_tandatangan, $catatan, $arahan, $id);
-
-if ($stmt->execute()) {
-    $role = $_SESSION['user_role'] ?? '';
-    if ($role == 'pengarah') echo "homedirector.php";
-    elseif ($role == 'tpa') echo "hometpa.php";
-    elseif ($role == 'tpp') echo "hometpp.php";
-    else echo "homeadmin.php";
-} else {
-    echo "error: " . $stmt->error;
+    if ($stmt->execute()) {
+        echo "success";
+    } else {
+        echo "Ralat Semasa Menyimpan: " . $stmt->error;
+    }
 }
 ?>
