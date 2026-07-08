@@ -1,14 +1,8 @@
 <?php
 include('db.php');
-
-if (!isset($_GET['id'])) { die("ID tidak dijumpai."); }
 $id = intval($_GET['id']);
-
-// Mengambil data dari database
 $result = $conn->query("SELECT * FROM minit_surat WHERE id = $id");
 $row = $result->fetch_assoc();
-
-if (!$row) { die("Data surat tidak ditemui."); }
 ?>
 <!DOCTYPE html>
 <html lang="ms">
@@ -53,7 +47,7 @@ if (!$row) { die("Data surat tidak ditemui."); }
 <div class="wrapper">
     <div class="card">
         <h3>📄 Dokumen Asal</h3>
-        <iframe src="uploads/<?= htmlspecialchars($row['fail_surat']) ?>" width="100%" height="600px" style="border:1px solid #ddd;"></iframe>
+        <iframe src="papar_fail.php?id=<?= $row['id'] ?>" width="100%" height="600px" style="border:1px solid #ddd;"></iframe>
     </div>
 
     <div class="card">
@@ -86,14 +80,14 @@ if (!$row) { die("Data surat tidak ditemui."); }
             </div>
         </div>
         <div class="signature-box">
-            <p><strong>Disahkan Oleh:</strong> Pengarah</p>
-            <?php if (!empty($row['tandatangan_fail'])): ?>
-                <img src="uploads/<?= htmlspecialchars($row['tandatangan_fail']) ?>" width="150px" style="border:1px solid #ccc;">
-            <?php else: ?>
-                <p style="color:red;"><em>Belum disahkan</em></p>
-            <?php endif; ?>
-            <p><strong>Tarikh:</strong> <?= !empty($row['status']) && $row['status'] == 'SELESAI' ? date('d/m/Y') : '-' ?></p>
-        </div>
+    <p><strong>Disahkan Oleh:</strong> Pengarah</p>
+    <?php if (!empty($row['tandatangan_data'])): ?>
+        <img src="data:image/png;base64,<?= base64_encode($row['tandatangan_data']) ?>" width="150px" style="border:1px solid #ccc;">
+    <?php else: ?>
+        <p style="color:red;"><em>Belum disahkan</em></p>
+    <?php endif; ?>
+    <p><strong>Tarikh:</strong> <?= ($row['status'] == 'SELESAI') ? date('d/m/Y') : '-' ?></p>
+</div>
 
         <a href="homedirector.php" class="btn-back">⬅ Kembali ke Dashboard</a>
     </div>
