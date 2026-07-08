@@ -1,58 +1,66 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 session_start();
 include('db.php');
 
-if (isset($_POST['btn_simpan'])) {
-    $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan'] ?? '');
-    $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima'] ?? '');
-    $daripada = mysqli_real_escape_string($conn, $_POST['daripada'] ?? '');
-    $perkara = mysqli_real_escape_string($conn, $_POST['perkara'] ?? '');
-    $kolej = mysqli_real_escape_string($conn, $_POST['kolej'] ?? '');
-    $target_role = mysqli_real_escape_string($conn, $_POST['target_role'] ?? 'pengarah');
-    $status = "BARU";
-    $didaftarkan_oleh = $_SESSION['user_name'] ?? 'Admin';
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $id = $_POST['surat_id'];
+    $email = $_POST['email'];
+    $nama_staf = $_POST['nama_staf'];
 
-    if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
-        // TUKAR: Simpan data fail sebagai blob terus menggunakan prepared statement
-        $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
-        
-        $sql = "INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, didaftarkan_oleh, fail_surat, status, target_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $didaftarkan_oleh, $file_data, $status, $target_role);
+    // 1. Semakan Staf
+    $stmt_check = $conn->prepare("SELECT nama FROM staff WHERE email = ? AND nama = ?");
+    $stmt_check->bind_param("ss", $email, $nama_staf);
+    $stmt_check->execute();
+    if ($stmt_check->get_result()->num_rows === 0) {
+        echo "<script>alert('Ralat: Maklumat staf tidak sah!'); window.history.back();</script>";
+        exit;
+    }
 
-        if ($stmt->execute()) {
-            // DAPATKAN EMEL PENERIMA
-            $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
-            $stmt_email->bind_param("s", $target_role);
-            $stmt_email->execute();
-            $result_email = $stmt_email->get_result()->fetch_assoc();
-            $email_penerima = $result_email['email'] ?? 'admin@kkkb.edu.my';
-
-            // HANTAR EMEL GUNA BREVO API (TIADA LAGI LOADING)
-            $api_key = getenv('BREVO_API_KEY');
-            $data = [
-                "sender" => ["email" => "no-reply@minitsurat.com", "name" => "Sistem Minit Digital"],
-                "to" => [["email" => $email_penerima]],
-                "subject" => "NOTIFIKASI: Minit Surat Baharu - " . $no_rujukan,
-                "htmlContent" => "Terdapat surat baharu untuk tindakan tuan/puan. Sila semak sistem."
-            ];
-
-            $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
-            curl_exec($ch);
-            curl_close($ch);
-
-            echo "<script>alert('Berjaya!'); window.location.href='homeadmin.php';</script>";
-        } else {
-            echo "Error: " . $conn->error;
-        }
+    // 2. Proses Fail
+    if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
+        $file_data = file_get_contents($_FILES['dokumen_minit']['tmp_name']);
+        $file_name = $_FILES['dokumen_minit']['name'];
+        $base64_file = base64_encode($file_data);
     } else {
-        echo "<script>alert('Sila pilih fail PDF.'); window.history.back();</script>";
+        echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
+        exit;
+    }
+
+    // 3. Hantar E-mel guna Brevo API
+    $api_key = getenv('BREVO_API_KEY'); // Pastikan anda set ini di Render Environment
+    
+    $data = [
+        "sender" => ["email" => "no-reply@minitsurat.com", "name" => "Sistem Minit Digital"],
+        "to" => [["email" => $email]],
+        "subject" => "Notifikasi Minit Surat",
+        "htmlContent" => "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.",
+        "attachment" => [
+            ["content" => $base64_file, "name" => $file_name]
+        ]
+    ];
+
+    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'api-key: ' . $api_key,
+        'Content-Type: application/json'
+    ]);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // 4. Semak status API (201 bermaksud berjaya)
+    if ($http_code == 201) {
+        $stmt = $conn->prepare("UPDATE minit_surat SET status = 'DIMAKLUM', maklum_kepada = ? WHERE id = ?");
+        $stmt->bind_param("ss", $nama_staf, $id);
+        $stmt->execute();
+
+        echo "<script>alert('Berjaya dihantar!'); window.location='homeadmin.php';</script>";
+    } else {
+        echo "<script>alert('E-mel gagal (Ralat API: $http_code). Sila pastikan API Key betul.'); window.history.back();</script>";
     }
 }
 ?>
