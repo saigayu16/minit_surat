@@ -1,27 +1,16 @@
-FROM php:8.2-apache
+FROM php:8.0-apache
 
-# 1. Install sistem yang diperlukan & extension PHP
+# 1. Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# 2. Update and install required system libraries
 RUN apt-get update && apt-get install -y \
-    git \
-    zip \
-    unzip \
-    libzip-dev \
-    && docker-php-ext-install mysqli pdo pdo_mysql zip
+    libmariadb-dev-compat \
+    libmariadb-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# 2. Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# 3. Install and configure mysqli specifically
+RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
 
-# 3. Tetapkan direktori kerja
-WORKDIR /var/www/html
-
-# 4. Salin composer.json dahulu (untuk optimasi cache)
-COPY composer.json ./
-
-# 5. Pasang library (tanpa dev untuk jimat masa)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# 6. Salin semua fail kod anda
-COPY . .
-
-# 7. Tetapkan kebenaran folder
-RUN chown -R www-data:www-data /var/www/html
+# 4. Copy your project files
+COPY . /var/www/html/
