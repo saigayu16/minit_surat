@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $mail->Port       = (int)getenv('MAIL_PORT');
         $mail->Timeout    = 15; // Had masa 15 saat
 
-        $mail->setFrom('no-reply@minitsurat.com', 'Sistem Minit Digital');
+        $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Digital');
         $mail->addAddress($email);
         $mail->addStringAttachment($file_data, $file_name);
         $mail->isHTML(true);
