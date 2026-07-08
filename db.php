@@ -1,19 +1,25 @@
 <?php
-// These are the names of the variables set in your Render Dashboard
-$host = getenv('DB_HOST');
-$user = getenv('DB_USER');
-$pass = getenv('DB_PASSWORD');
-$db   = getenv('DB_NAME');
-$port = getenv('DB_PORT');
+// 1. Ambil nilai dan pastikan tiada ruang kosong yang tidak sengaja (trim)
+$host = trim(getenv('DB_HOST'));
+$user = trim(getenv('DB_USER'));
+$pass = trim(getenv('DB_PASSWORD'));
+$db   = trim(getenv('DB_NAME'));
+$port = (int)getenv('DB_PORT'); // Tukar kepada integer untuk port
 
-// If one of these is missing, it will tell you in the browser
-if (!$host || !$user || !$pass || !$db || !$port) {
-    die("Error: Please set all 5 Environment Variables (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT) in your Render Dashboard.");
+// 2. Semakan untuk memastikan variabel wujud
+if (empty($host) || empty($user) || empty($db) || empty($port)) {
+    die("Error: Sila pastikan DB_HOST, DB_USER, DB_NAME, dan DB_PORT telah ditetapkan dalam Render Dashboard.");
 }
 
+// 3. Sambungan MySQLi
 $conn = new mysqli($host, $user, $pass, $db, $port);
 
+// 4. Periksa sambungan
 if ($conn->connect_error) {
+    // Sembunyikan $pass dalam mesej ralat untuk keselamatan
     die("Connection failed: " . $conn->connect_error);
 }
+
+// Set charset kepada utf8mb4 supaya tiada ralat aksara
+$conn->set_charset("utf8mb4");
 ?>
