@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
         "to" => [["email" => $email_penerima]],
         "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "Hai, terdapat surat baharu untuk tindakan anda ($target_role).<br><br>Perkara: $perkara",
+        "htmlContent" => "Assalamualaikum dan Salam Sejahtera, terdapat surat baharu untuk tindakan anda. Boleh access MinitSurat untuk tandatangan. Sekian terima kasih.S($target_role).<br><br>Perkara: $perkara",
         "attachment" => [["content" => $base64_file, "name" => $file_name]]
     ];
 
