@@ -1,126 +1,53 @@
 <?php
-session_start();
 include('db.php');
-
-// 1. Semak Sesi Login
-if (!isset($_SESSION['user_email'])) {
-    header("Location: login.php");
-    exit();
-}
-
-// 2. Semak ID Surat
-if (!isset($_GET['id']) || empty($_GET['id'])) { die("ID tidak sah"); }
-$id = intval($_GET['id']);
-
-// 3. Dapatkan data surat
-$res = $conn->query("SELECT * FROM minit_surat WHERE id = $id");
-$surat = $res->fetch_assoc();
-
-if (!$surat) { die("Dokumen tidak ditemui"); }
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>Tandatangan Digital</title>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>Tandatangan Pengarah</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.1.7/signature_pad.umd.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
-        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        #signature-pad { 
-            border: 2px dashed #cbd5e0; width: 100%; height: 300px; border-radius: 8px; 
-            cursor: crosshair; background-color: #ffffff; margin-bottom: 15px; touch-action: none; display: block;
-        }
-        .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; width: 48%; transition: opacity 0.2s; }
-        textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; margin-bottom: 15px; }
-        .sticky-note { background: #fef08a; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .sig-container { border: 2px dashed #cbd5e1; width: 400px; height: 200px; margin: 20px 0; }
+        canvas { width: 100%; height: 100%; cursor: crosshair; }
+        .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; }
+        .btn-save { background: #10b981; color: white; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="panel">
-        <h3><i class="fa-solid fa-file-pdf"></i> Dokumen Rujukan</h3>
-        <iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="600px" style="border:none;"></iframe>
-    </div>
-
-    <div class="panel">
-        <div class="sticky-note">
-            <h4>Ringkasan Minit</h4>
-            <p><strong>No Rujukan:</strong> <?= htmlspecialchars($surat['no_rujukan']) ?></p>
-            <p><strong>Perkara:</strong> <?= htmlspecialchars($surat['perkara']) ?></p>
-        </div>
-
-        <label><strong>Catatan Pengarah:</strong></label>
-        <textarea id="catatan" placeholder="Tulis ulasan di sini..."></textarea>
-        
-        <div class="arahan-container">
-            <label><input type="checkbox" name="arahan" value="Untuk Tindakan"> Untuk Tindakan</label><br>
-            <label><input type="checkbox" name="arahan" value="Untuk Makluman"> Untuk Makluman</label>
-        </div>
-
-        <p>Sila turunkan tandatangan:</p>
-        <canvas id="signature-pad"></canvas>
-        
-        <div style="display: flex; justify-content: space-between;">
-            <button class="btn" id="btn-clear" style="background:#e53e3e; color:white;">Padam</button>
-            <button class="btn" id="save" style="background:#38a169; color:white;">Minit & Sahkan ke Drive</button>
-        </div>
-    </div>
+<h3>Tandatangan untuk ID: <?= $id ?></h3>
+<div class="sig-container">
+    <canvas id="signature-pad"></canvas>
 </div>
+<button id="clear" class="btn">Padam</button>
+<button id="save" class="btn btn-save">SIMPAN TANDATANGAN</button>
 
 <script>
-    // 1. Initialize Signature Pad
-    var canvas = document.getElementById('signature-pad');
-    var signaturePad = new SignaturePad(canvas);
+    const canvas = document.getElementById('signature-pad');
+    const signaturePad = new SignaturePad(canvas);
 
-    // 2. Fungsi Butang Padam
-    document.getElementById('btn-clear').addEventListener('click', function() {
-        signaturePad.clear();
-    });
+    document.getElementById('clear').addEventListener('click', () => signaturePad.clear());
 
-    // 3. Fungsi Butang Simpan & Hantar
-    document.getElementById('save').addEventListener('click', function() {
-        if (signaturePad.isEmpty()) { 
-            alert("Sila turunkan tandatangan terlebih dahulu!"); 
-            return; 
-        }
+    document.getElementById('save').addEventListener('click', () => {
+        if (signaturePad.isEmpty()) { alert("Sila tandatangan dahulu!"); return; }
+
+        const dataURL = signaturePad.toDataURL();
         
-        const btnSave = document.getElementById('save');
-        btnSave.innerText = "Memproses...";
-        btnSave.disabled = true;
-
-        // Kumpul arahan
-        const selected = [];
-        document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
-        
-        const fd = new FormData();
-        fd.append('id', "<?= $id ?>");
-        fd.append('catatan', document.getElementById('catatan').value);
-        fd.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
-        fd.append('folderId', "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1");
-        fd.append('arahan_pilihan', selected.join(', '));
-
-        fetch('proses_tandatangan.php', { method: 'POST', body: fd })
-        .then(response => response.text())
-        .then(result => {
-            if (result.trim() === 'success') {
-                alert("Berjaya disahkan!");
-                window.location.href = 'homedirector.php';
-            } else {
-                alert("Ralat: " + result);
-                btnSave.innerText = "Minit & Sahkan ke Drive";
-                btnSave.disabled = false;
-            }
+        // Hantar ke server menggunakan fetch
+        fetch('simpan_signature.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'id=<?= $id ?>&image=' + encodeURIComponent(dataURL)
         })
-        .catch(error => {
-            alert("Ralat Rangkaian: " + error);
-            btnSave.innerText = "Minit & Sahkan ke Drive";
-            btnSave.disabled = false;
+        .then(response => response.text())
+        .then(data => {
+            alert("Tandatangan berjaya disimpan!");
+            window.location.href = 'cetak_minit.php?id=<?= $id ?>';
         });
     });
 </script>
+
 </body>
 </html>
