@@ -127,7 +127,13 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             fetch('https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec', {
                 method: 'POST',
                 body: formData
-            })
+                id: "<?= $id ?>",
+                image: signaturePad.toDataURL('image/png'),
+                catatan: document.getElementById('catatan').value,
+                fileId: "<?= $surat['drive_file_id'] ?>", // Pastikan kolum ini wujud di DB
+                folderId: "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1"
+    })
+})
             .then(response => response.text())
             .then(data => {
                 if (data.trim() === 'SUCCESS') {
