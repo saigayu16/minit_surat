@@ -1,75 +1,60 @@
 <?php
 include('db.php');
-
 if (!isset($_GET['id'])) { die("ID tidak dijumpai."); }
 $id = intval($_GET['id']);
-
-// Mengambil data surat
 $result = $conn->query("SELECT * FROM minit_surat WHERE id = $id");
 $row = $result->fetch_assoc();
-
 if (!$row) { die("Data surat tidak ditemui."); }
 
-// Tentukan sumber fail untuk dipaparkan
+// Logik Sumber Fail
 $fail_tempatan = "uploads/" . $row['fail_surat'];
-$guna_drive = false;
-
-// Logik paparan: Guna uploads/ jika fail wujud, jika tidak guna Drive
-if (!empty($row['fail_surat']) && file_exists($fail_tempatan)) {
-    $sumber_fail = $fail_tempatan;
-} else if (!empty($row['drive_file_id']) && $row['drive_file_id'] !== "GAGAL_UPLOAD") {
-    $sumber_fail = "https://drive.google.com/file/d/" . $row['drive_file_id'] . "/preview";
-    $guna_drive = true;
-} else {
-    $sumber_fail = null;
-}
+$sumber_fail = (file_exists($fail_tempatan)) ? $fail_tempatan : "https://drive.google.com/file/d/" . $row['drive_file_id'] . "/preview";
 ?>
 <!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>Paparan Rasmi - <?= htmlspecialchars($row['no_rujukan']) ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('background.jpg'); background-size: cover; background-position: center; font-family: 'Segoe UI', sans-serif; }
-        .wrapper { max-width: 1200px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; }
-        .card { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-        .info-label { width: 150px; font-weight: bold; color: #4a5568; }
-        .btn-nav { padding: 8px 15px; background: #4a5568; color: white; text-decoration: none; border-radius: 5px; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 1300px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 25px; }
+        .card { background: var(--card); padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        .meta-info { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 8px 0; }
+        iframe { width: 100%; height: 75vh; border-radius: 8px; border: none; background: #f1f5f9; }
+        .btn-back { display: inline-block; padding: 10px 20px; background: var(--primary); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; transition: 0.3s; }
+        .btn-back:hover { background: #1d4ed8; }
     </style>
 </head>
 <body>
 
-<div class="wrapper">
+<div class="container">
+    <!-- Bahagian Dokumen -->
     <div class="card">
-        <h3>📄 Dokumen: <?= htmlspecialchars($row['no_rujukan']) ?></h3>
-        
-        <?php if ($sumber_fail): ?>
-            <iframe src="<?= $sumber_fail ?>" width="100%" height="600px" style="border:1px solid #ddd;"></iframe>
-        <?php else: ?>
-            <div style="height: 600px; display: flex; align-items: center; justify-content: center; background: #eee;">
-                <p>Dokumen tidak dijumpai di server mahupun di Google Drive.</p>
-            </div>
-        <?php endif; ?>
+        <h2>📄 Dokumen Rujukan: <?= htmlspecialchars($row['no_rujukan']) ?></h2>
+        <iframe src="<?= $sumber_fail ?>"></iframe>
     </div>
 
+    <!-- Bahagian Minit -->
     <div class="card">
-        <h2>BORANG MINIT</h2>
-        <div class="info-row"><div class="info-label">Rujukan:</div> <div><?= htmlspecialchars($row['no_rujukan']) ?></div></div>
-        <div class="info-row"><div class="info-label">Kolej:</div> <div><?= htmlspecialchars($row['kolej'] ?? '-') ?></div></div>
-        <hr>
-        <p><strong>Catatan:</strong> <?= nl2br(htmlspecialchars($row['catatan'] ?? 'Tiada')) ?></p>
-        
-        <!-- Navigasi Kronologi -->
-        <div style="margin-top: 20px; display: flex; justify-content: space-between;">
-            <?php
-            $prev = $conn->query("SELECT id FROM minit_surat WHERE id < $id ORDER BY id DESC LIMIT 1")->fetch_assoc();
-            $next = $conn->query("SELECT id FROM minit_surat WHERE id > $id ORDER BY id ASC LIMIT 1")->fetch_assoc();
-            ?>
-            <a href="view_surat.php?id=<?= $prev['id'] ?? $id ?>" class="btn-nav" <?= !$prev ? 'style="visibility:hidden"' : '' ?>>⬅ Sebelumnya</a>
-            <a href="view_surat.php?id=<?= $next['id'] ?? $id ?>" class="btn-nav" <?= !$next ? 'style="visibility:hidden"' : '' ?>>Seterusnya ➡</a>
+        <h2>📝 Butiran Minit</h2>
+        <div class="meta-info">
+            <div class="meta-item"><span>Rujukan:</span> <b><?= htmlspecialchars($row['no_rujukan']) ?></b></div>
+            <div class="meta-item"><span>Tarikh Terima:</span> <b><?= htmlspecialchars($row['tarikh_terima']) ?></b></div>
+            <div class="meta-item"><span>Daripada:</span> <b><?= htmlspecialchars($row['daripada']) ?></b></div>
+            <div class="meta-item"><span>Status:</span> <b style="color:var(--primary)"><?= htmlspecialchars($row['status']) ?></b></div>
         </div>
-        <br>
-        <a href="homedirector.php">⬅ Kembali ke Dashboard</a>
+        
+        <p><strong>Catatan Pengarah:</strong></p>
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; min-height: 100px;">
+            <?= nl2br(htmlspecialchars($row['catatan'] ?? 'Tiada catatan lagi.')) ?>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="homedirector.php" class="btn-back">⬅ Kembali ke Dashboard</a>
+        </div>
     </div>
 </div>
 
