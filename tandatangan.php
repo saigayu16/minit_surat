@@ -117,7 +117,6 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             formData.append('id', "<?= $id ?>");
             formData.append('image', signaturePad.toDataURL('image/png'));
             formData.append('catatan', document.getElementById('catatan').value);
-            formData.append('fileId', fileIdFromPhp);
             
             const selected = [];
             document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
