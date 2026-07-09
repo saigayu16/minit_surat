@@ -30,21 +30,12 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         .container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         #signature-pad { 
-            border: 2px dashed #cbd5e0; 
-            width: 100%; 
-            height: 300px; 
-            border-radius: 8px; 
-            cursor: crosshair; 
-            background-color: #ffffff; 
-            margin-bottom: 15px; 
-            touch-action: none; 
-            display: block;
+            border: 2px dashed #cbd5e0; width: 100%; height: 300px; border-radius: 8px; 
+            cursor: crosshair; background-color: #ffffff; margin-bottom: 15px; touch-action: none; display: block;
         }
         .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; width: 48%; transition: opacity 0.2s; }
         textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; margin-bottom: 15px; }
         .sticky-note { background: #fef08a; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-
     </style>
 </head>
 <body>
@@ -81,55 +72,55 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 </div>
 
 <script>
-    var canvas = document.querySelector('canvas');
+    // 1. Initialize Signature Pad
+    var canvas = document.getElementById('signature-pad');
     var signaturePad = new SignaturePad(canvas);
 
-    // 2. Fungsi Butang
-   <script>
-document.getElementById('save').addEventListener('click', function() {
-    // 1. Semak tandatangan
-    if (signaturePad.isEmpty()) { 
-        alert("Sila turunkan tandatangan terlebih dahulu!"); 
-        return; 
-    }
-    
-    // 2. Kumpul arahan DULU (supaya 'selected' dah ada nilai)
-    const selected = [];
-    document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
-    
-    // 3. Setup butang loading
-    const btnSave = document.getElementById('save');
-    btnSave.innerText = "Memproses...";
-    btnSave.disabled = true;
+    // 2. Fungsi Butang Padam
+    document.getElementById('btn-clear').addEventListener('click', function() {
+        signaturePad.clear();
+    });
 
-    // 4. Bina FormData SEKALI SAHAJA
-    const fd = new FormData();
-    fd.append('id', "<?= $id ?>");
-    fd.append('catatan', document.getElementById('catatan').value);
-    fd.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
-    fd.append('folderId', "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1");
-    fd.append('arahan_pilihan', selected.join(', '));
+    // 3. Fungsi Butang Simpan & Hantar
+    document.getElementById('save').addEventListener('click', function() {
+        if (signaturePad.isEmpty()) { 
+            alert("Sila turunkan tandatangan terlebih dahulu!"); 
+            return; 
+        }
+        
+        const btnSave = document.getElementById('save');
+        btnSave.innerText = "Memproses...";
+        btnSave.disabled = true;
 
-    // 5. Hantar ke proses_tandatangan.php
-    fetch('proses_tandatangan.php', { method: 'POST', body: fd })
-    .then(response => response.text())
-    .then(result => {
-        if (result.trim() === 'success') {
-            alert("Berjaya disahkan!");
-            window.location.href = 'homedirector.php';
-        } else {
-            alert("Ralat Server: " + result);
+        // Kumpul arahan
+        const selected = [];
+        document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
+        
+        const fd = new FormData();
+        fd.append('id', "<?= $id ?>");
+        fd.append('catatan', document.getElementById('catatan').value);
+        fd.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
+        fd.append('folderId', "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1");
+        fd.append('arahan_pilihan', selected.join(', '));
+
+        fetch('proses_tandatangan.php', { method: 'POST', body: fd })
+        .then(response => response.text())
+        .then(result => {
+            if (result.trim() === 'success') {
+                alert("Berjaya disahkan!");
+                window.location.href = 'homedirector.php';
+            } else {
+                alert("Ralat: " + result);
+                btnSave.innerText = "Minit & Sahkan ke Drive";
+                btnSave.disabled = false;
+            }
+        })
+        .catch(error => {
+            alert("Ralat Rangkaian: " + error);
             btnSave.innerText = "Minit & Sahkan ke Drive";
             btnSave.disabled = false;
-        }
-    })
-    .catch(error => {
-        alert("Ralat Fetch: " + error);
-        btnSave.innerText = "Minit & Sahkan ke Drive";
-        btnSave.disabled = false;
+        });
     });
-});
 </script>
-  
 </body>
 </html>
