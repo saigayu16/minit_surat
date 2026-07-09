@@ -1,19 +1,16 @@
 <?php
 session_start();
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 include('db.php'); 
 
+// Semak Sesi Login
 if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true) {
     header("Location: login.php");
     exit;
 }
 
 $user_name = $_SESSION['user_name'] ?? 'Pengarah';
-$user_role = ucfirst($_SESSION['user_role'] ?? 'Pengarah');
 
+// Pengiraan Statistik
 $total_perlu_sahkan = 0;
 $total_selesai = 0;
 $total_kepala_batas = 0;
@@ -53,7 +50,7 @@ if($count_kkkb) $total_kepala_batas = $count_kkkb->fetch_assoc()['total'];
         td { padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; color: #334155; }
         .status-badge { padding: 6px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; }
         .wait { background: #fee2e2; color: #991b1b; } .done { background: #d1fae5; color: #065f46; }
-        .btn-action { padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+        .btn-action { padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; display: inline-block; }
         .btn-view { background: #fff7ed; color: var(--accent-view); border: 1px solid #ffedd5; }
         .btn-sign { background: var(--accent-sign); color: white; }
     </style>
@@ -81,7 +78,8 @@ if($count_kkkb) $total_kepala_batas = $count_kkkb->fetch_assoc()['total'];
                     <th>Kolej</th>
                     <th>Perkara</th>
                     <th>Status</th>
-                    <th>Catatan</th> <th>Tindakan</th>
+                    <th>Catatan</th>
+                    <th>Tindakan</th>
                 </tr>
             </thead>
             <tbody>
@@ -103,12 +101,12 @@ if($count_kkkb) $total_kepala_batas = $count_kkkb->fetch_assoc()['total'];
                             <td style='font-style:italic; color:#64748b;'>$catatan_pendek</td>
                             <td>";
                         
-                        // Pastikan kod ini wujud dalam gelung (loop) jadual anda
-                    if (strcasecmp($status, 'SELESAI') == 0) {
-                        echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
-                    } else {
-                        echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign"><i class="fa-solid fa-pen-nib"></i> Sahkan</a>';
-                    }
+                        // Logik tukar butang automatik
+                        if (strcasecmp($status, 'SELESAI') == 0) {
+                            echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
+                        } else {
+                            echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign"><i class="fa-solid fa-pen-nib"></i> Sahkan</a>';
+                        }
                         echo "</td></tr>";
                     }
                 } else {
