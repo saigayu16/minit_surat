@@ -20,15 +20,12 @@ $daripada = htmlspecialchars($row['daripada'] ?? '-');
 $didaftarkan_oleh = htmlspecialchars($row['didaftarkan_oleh'] ?? 'Admin');
 $perkara = htmlspecialchars($row['perkara'] ?? '-');
 $catatan = !empty($row['catatan']) ? $row['catatan'] : 'Tiada catatan tambahan diberikan.';
-$arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'Tiada Arahan');
-
-// Data Tandatangan
-$signature_img = !empty($row['tandatangan_fail']) ? 'uploads/' . $row['tandatangan_fail'] : "";
-$signed_by = htmlspecialchars($row['signed_by'] ?? 'PENGARAH'); // Role penandatangan
+$nama_fail = htmlspecialchars($row['fail_surat'] ?? 'Dokumen Asal');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 
-// Pautan Dokumen (Menggunakan papar_fail.php untuk mengelak 'Forbidden')
-$url_dokumen = "papar_fail.php?id=" . $id;
+// Logik Tandatangan & Dokumen
+$signature_img = !empty($row['tandatangan_fail']) ? 'uploads/' . $row['tandatangan_fail'] : "";
+$url_dokumen = "papar_fail.php?id=" . $id; 
 ?>
 
 <!DOCTYPE html>
@@ -40,7 +37,7 @@ $url_dokumen = "papar_fail.php?id=" . $id;
     <style>
         body { margin: 0; padding: 20px; background-color: #e2e8f0; background-image: url('daftarsurat.jpg'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat; font-family: 'Segoe UI', sans-serif; }
         .page-box { background: #fff; width: 210mm; margin: 0 auto 30px auto; padding: 60px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1); box-sizing: border-box; }
-        .document-view-box { width: 210mm; height: 600px; margin: 0 auto 30px auto; border: 2px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #fff; }
+        .document-view-box { width: 210mm; height: 800px; margin: 0 auto 30px auto; border: 2px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #fff; }
         .header-modern { border-bottom: 2px solid #0f172a; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
         .header-modern h1 { margin: 0; font-size: 24px; color: #0f172a; text-transform: uppercase; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
@@ -49,7 +46,7 @@ $url_dokumen = "papar_fail.php?id=" . $id;
         .sticky-note::before { content: "CATATAN / MINIT ARAHAN"; position: absolute; top: -12px; left: 20px; background: #fff; padding: 0 10px; font-size: 11px; font-weight: bold; color: #2563eb; }
         .catatan-content { color: #334155; line-height: 1.6; font-size: 15px; }
         .footer-signature { display: flex; justify-content: flex-end; margin-top: 60px; }
-        .sig-box { border: 1px solid #e2e8f0; padding: 15px; width: 220px; text-align: center; border-radius: 4px; background: #f8fafc; }
+        .sig-box { border: 1px solid #e2e8f0; padding: 15px; width: 200px; text-align: center; border-radius: 4px; background: #f8fafc; }
         .btn-print { background: #2563eb; color: white; padding: 15px 40px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         @media print { .no-print { display: none !important; } body { background: #fff; padding: 0; } .page-box { box-shadow: none; border: none; margin: 0 auto; padding: 20mm; } }
     </style>
@@ -76,22 +73,17 @@ $url_dokumen = "papar_fail.php?id=" . $id;
         <div><div class="info-label">Didaftarkan Oleh</div><strong><?= $didaftarkan_oleh ?></strong></div>
     </div>
 
-    <div style="margin-top: 30px;">
-        <div class="info-label">Perkara / Tajuk</div>
-        <div style="font-weight: 600; font-size: 16px; color: #1e293b; padding: 10px 0; border-bottom: 1px solid #e2e8f0;"><?= $perkara ?></div>
-    </div>
-
     <div class="sticky-note">
-        <div style="color: #2563eb; font-weight: bold; margin-bottom: 5px;">ARAHAN: <?= $arahan ?></div>
+        <div style="color: #2563eb; font-weight: bold; margin-bottom: 5px;">ARAHAN: <?= htmlspecialchars($row['arahan_pilihan'] ?? '') ?></div>
         <div class="catatan-content"><?= nl2br(htmlspecialchars($catatan)) ?></div>
     </div>
 
     <div class="footer-signature">
-        <?php if (strcasecmp($status, 'SELESAI') == 0 && !empty($signature_img)): ?>
+        <?php if (!empty($signature_img)): ?>
             <div class="sig-box">
-                <img src="<?= $signature_img ?>" style="max-height: 50px; width: auto;">
-                <div style="font-size: 11px; margin-top: 8px; border-top: 1px solid #cbd5e1; padding-top: 5px; text-transform: uppercase;">
-                    <b><?= $signed_by ?></b><br><?= $tarikh_sah ?>
+                <img src="<?= $signature_img ?>" style="max-height: 45px; width: auto;">
+                <div style="font-size: 10px; margin-top: 10px; border-top: 1px solid #cbd5e1; padding-top: 5px;">
+                    <b>PENGARAH</b><br><?= $tarikh_sah ?>
                 </div>
             </div>
         <?php else: ?>
