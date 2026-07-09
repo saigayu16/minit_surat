@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $base64_file = base64_encode($file_data);
 
         // --- TAMBAHAN: HANTAR KE GOOGLE DRIVE ---
-        $google_script_url = "MASUKKAN_URL_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI"; 
+        $google_script_url = "https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec"; 
         $payload = json_encode(['fileData' => $base64_file, 'mimeType' => 'application/pdf', 'fileName' => $file_name]);
         
         $ch_drive = curl_init($google_script_url);
