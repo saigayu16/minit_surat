@@ -5,7 +5,7 @@ session_start();
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil input
+    // 1. Sanitasi input
     $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan']);
     $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima']);
     $daripada = mysqli_real_escape_string($conn, $_POST['daripada']);
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $kolej = mysqli_real_escape_string($conn, $_POST['kolej']);
     $target_role = mysqli_real_escape_string($conn, $_POST['target_role']);
     
-    // 2. Ambil emel
+    // 2. Dapatkan Emel Penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
     $stmt_email->bind_param("s", $target_role);
     $stmt_email->execute();
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("Ralat: Tiada emel untuk role $target_role");
     }
 
-    // 3. Proses Fail & Hantar ke Drive (Hanya SEKALI)
+    // 3. Proses Fail & Hantar ke Google Drive
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_name = $_FILES['fail_surat']['name'];
         $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
@@ -42,12 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
 
+        // Jika berjaya, simpan ID, jika gagal tandakan ralat
         $drive_file_id = ($http_code_drive == 200) ? trim($drive_response) : "GAGAL_UPLOAD";
     } else {
-        die("Fail diperlukan.");
+        die("Fail tidak dijumpai atau ralat muat naik.");
     }
 
-    // 4. Integrasi API Brevo
+    // 4. Integrasi API Brevo (E-mel)
     $api_key = getenv('BREVO_API_KEY');
     $data = [
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
@@ -77,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo "Ralat Database: " . $stmt->error;
         }
     } else {
-        echo "E-mel gagal (Ralat: $http_code)";
+        echo "E-mel gagal (Ralat HTTP: $http_code)";
     }
 }
 ?>
