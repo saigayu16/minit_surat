@@ -97,10 +97,13 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         btnSave.disabled = true;
 
         const fd = new FormData();
+       // Di dalam script tandatangan.php
+        const fd = new FormData();
         fd.append('id', "<?= $id ?>");
-        fd.append('image', signaturePad.toDataURL('image/png'));
         fd.append('catatan', document.getElementById('catatan').value);
         fd.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
+        fd.append('arahan_pilihan', selected.join(', '));
+        // Kita tidak perlu append 'image' lagi
         fd.append('folderId', "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1");
         
         // Kumpul arahan
