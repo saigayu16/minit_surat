@@ -93,7 +93,7 @@ document.getElementById('save').addEventListener('click', function() {
     const selected = [];
     document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
     
-    // Bina FormData dengan nama 'fd'
+    // Bina FormData
     const fd = new FormData();
     fd.append('id', "<?= $id ?>");
     fd.append('image', signaturePad.toDataURL('image/png'));
@@ -120,8 +120,7 @@ document.getElementById('save').addEventListener('click', function() {
         btnSave.innerText = "Minit & Sahkan ke Drive";
         btnSave.disabled = false;
     });
-});
-    };
+}); // <--- Tiada lagi '};' tambahan di sini
 </script>
 </body>
 </html>
