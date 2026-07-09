@@ -1,11 +1,14 @@
 <?php
 include('db.php');
+
+if (!isset($_GET['id'])) { die("ID tidak dijumpai."); }
 $id = intval($_GET['id']);
-// Mengambil data surat termasuk tarikh/masa daftar
+
+// Mengambil data dari database
 $result = $conn->query("SELECT * FROM minit_surat WHERE id = $id");
 $row = $result->fetch_assoc();
 
-if (!$row) { die("Surat tidak dijumpai."); }
+if (!$row) { die("Data surat tidak ditemui."); }
 ?>
 <!DOCTYPE html>
 <html lang="ms">
@@ -13,50 +16,88 @@ if (!$row) { die("Surat tidak dijumpai."); }
     <meta charset="UTF-8">
     <title>Paparan Rasmi - <?= htmlspecialchars($row['no_rujukan']) ?></title>
     <style>
-        body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding: 20px; }
-        .wrapper { max-width: 1200px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .wrapper { 
+            max-width: 1200px; 
+            margin: auto; 
+            display: grid; 
+            grid-template-columns: 1fr 400px; 
+            gap: 20px; 
+        }
+
+        /* Menjadikan kad sedikit lutsinar supaya latar belakang nampak 'elegan' */
+        .card { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1); 
+            backdrop-filter: blur(5px); /* Efek 'glassmorphism' moden */
+        }
+        
+        .minit-header { border-bottom: 3px solid #2d3748; padding-bottom: 10px; margin-bottom: 20px; }
         .info-row { display: flex; margin-bottom: 10px; }
         .info-label { width: 150px; font-weight: bold; color: #4a5568; }
-        .nav-btn { padding: 10px 15px; background: #2d3748; color: white; text-decoration: none; border-radius: 5px; }
+        
+        .signature-box { margin-top: 30px; padding-top: 20px; border-top: 1px dashed #cbd5e0; }
+        .btn-back { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4a5568; color: white; text-decoration: none; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
     <div class="card">
-        <h3>📄 Dokumen (Didaftar: <?= $row['created_at'] ?? 'Tiada masa' ?>)</h3>
-        <iframe id="pdf_frame" width="100%" height="700px" style="border:none;"></iframe>
+        <h3>📄 Dokumen Asal</h3>
+        <iframe src="uploads/<?= htmlspecialchars($row['fail_surat']) ?>" width="100%" height="600px" style="border:1px solid #ddd;"></iframe>
     </div>
 
     <div class="card">
-        <h2>BORANG MINIT</h2>
-        <div class="info-row"><div class="info-label">Rujukan:</div> <div><?= htmlspecialchars($row['no_rujukan']) ?></div></div>
-        <div class="info-row"><div class="info-label">Didaftar:</div> <div><?= $row['created_at'] ?></div></div>
+        <div class="minit-header">
+            <h2>BORANG MINIT</h2>
+        </div>
         
+        <div class="info-row"><div class="info-label">Rujukan:</div> <div><?= htmlspecialchars($row['no_rujukan']) ?></div></div>
+        <div class="info-row"><div class="info-label">Kolej:</div> <div><?= htmlspecialchars($row['kolej'] ?? '-') ?></div></div>
+        <div class="info-row"><div class="info-label">Daripada:</div> <div><?= htmlspecialchars($row['daripada'] ?? '-') ?></div></div>
         <hr>
         
-        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-            <?php
-            $prev = $conn->query("SELECT id FROM minit_surat WHERE id < $id ORDER BY id DESC LIMIT 1")->fetch_assoc();
-            $next = $conn->query("SELECT id FROM minit_surat WHERE id > $id ORDER BY id ASC LIMIT 1")->fetch_assoc();
-            ?>
-            <a href="view_surat.php?id=<?= $prev['id'] ?? $id ?>" class="nav-btn">⬅ Sebelumnya</a>
-            <a href="view_surat.php?id=<?= $next['id'] ?? $id ?>" class="nav-btn">Seterusnya ➡</a>
+        <p><strong>Arahan & Catatan:</strong></p>
+        <div style="background: #f0f7ff; padding: 15px; border-left: 5px solid #2563eb; border-radius: 4px; margin-bottom: 20px;">
+            
+            <?php if (!empty($row['arahan_pilihan'])): ?>
+                <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #bfdbfe;">
+                    <strong style="color: #1e40af;"><i class="fa-solid fa-clipboard-check"></i> Arahan:</strong>
+                    <div style="color: #1e293b; font-weight: 600; margin-top: 5px;">
+                        <?= htmlspecialchars($row['arahan_pilihan']) ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div>
+                <strong style="color: #475569;">Catatan Tambahan:</strong>
+                <div style="margin-top: 5px; color: #334155;">
+                    <?= !empty($row['catatan']) ? nl2br(htmlspecialchars($row['catatan'])) : '<em>Tiada catatan tambahan.</em>' ?>
+                </div>
+            </div>
         </div>
-        <br>
-        <a href="homedirector.php" style="color: #4a5568;">⬅ Kembali ke Dashboard</a>
+        <div class="signature-box">
+            <p><strong>Disahkan Oleh:</strong> Pengarah</p>
+            <?php if (!empty($row['tandatangan_fail'])): ?>
+                <img src="uploads/<?= htmlspecialchars($row['tandatangan_fail']) ?>" width="150px" style="border:1px solid #ccc;">
+            <?php else: ?>
+                <p style="color:red;"><em>Belum disahkan</em></p>
+            <?php endif; ?>
+            <p><strong>Tarikh:</strong> <?= !empty($row['status']) && $row['status'] == 'SELESAI' ? date('d/m/Y') : '-' ?></p>
+        </div>
+
+        <a href="homedirector.php" class="btn-back">⬅ Kembali ke Dashboard</a>
     </div>
 </div>
-
-<script>
-    // Fetch ID fail untuk paparan auto
-    fetch('papar_fail.php?id=<?= $id ?>')
-    .then(r => r.text())
-    .then(url => {
-        if (url.startsWith("http")) document.getElementById('pdf_frame').src = url;
-    });
-</script>
 
 </body>
 </html>
