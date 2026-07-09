@@ -86,9 +86,9 @@ $fail_path = 'uploads/' . htmlspecialchars($row['fail_surat'] ?? '');
 
 <div class="document-view-box no-print">
     <div style="padding: 10px; background: #f1f5f9; border-bottom: 1px solid #ddd; font-size: 12px; font-weight: bold;">
-        <i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL
+        <i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL: <?= $nama_fail ?>
     </div>
-    <iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="100%" frameborder="0"></iframe>
+    <iframe src="<?= $fail_path ?>" width="100%" height="100%" frameborder="0"></iframe>
 </div>
 
 <div class="page-box">
@@ -121,17 +121,17 @@ $fail_path = 'uploads/' . htmlspecialchars($row['fail_surat'] ?? '');
 </div>
 
     <div class="footer-signature">
-    <?php if (strcasecmp($status, 'SELESAI') == 0 && !empty($row['tandatangan_data'])): ?>
-        <div class="sig-box">
-            <img src="data:image/png;base64,<?= base64_encode($row['tandatangan_data']) ?>" style="max-height: 45px; width: auto;">
-            <div style="font-size: 10px; margin-top: 10px; border-top: 1px solid #cbd5e1; padding-top: 5px;">
-                <b>PENGARAH</b><br><?= $tarikh_sah ?>
+        <?php if (strcasecmp($status, 'SELESAI') == 0 && !empty($signature_img)): ?>
+            <div class="sig-box">
+                <img src="<?= $signature_img ?>" style="max-height: 45px; width: auto;">
+                <div style="font-size: 10px; margin-top: 10px; border-top: 1px solid #cbd5e1; padding-top: 5px;">
+                    <b>PENGARAH</b><br><?= $tarikh_sah ?>
+                </div>
             </div>
-        </div>
-    <?php else: ?>
-        <div style="color: #94a3b8; font-style: italic;">(Menunggu tandatangan pengarah)</div>
-    <?php endif; ?>
-</div>
+        <?php else: ?>
+            <div style="color: #94a3b8; font-style: italic;">(Menunggu tandatangan pengarah)</div>
+        <?php endif; ?>
+    </div>
 </div>
 
 <button class="btn-print no-print" onclick="window.print()">
