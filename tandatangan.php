@@ -81,25 +81,7 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 <script>
     window.onload = function() {
         const canvas = document.getElementById('signature-pad');
-        
-        // Debugging: Semak ID yang diambil dari PHP dan paparkan di console F12
-        const fileIdFromPhp = "<?= isset($surat['drive_file_id']) ? $surat['drive_file_id'] : '' ?>";
-        console.log("File ID dari Database:", fileIdFromPhp);
-
-        function adjustCanvasSize() {
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-        }
-
-        adjustCanvasSize();
-        
-        const signaturePad = new SignaturePad(canvas, {
-            minWidth: 1,
-            maxWidth: 3,
-            penColor: "rgb(0, 0, 0)"
-        });
+        const signaturePad = new SignaturePad(canvas, { minWidth: 1, maxWidth: 3, penColor: "rgb(0, 0, 0)" });
 
         document.getElementById('btn-clear').addEventListener('click', () => signaturePad.clear());
 
@@ -113,47 +95,43 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             btnSave.innerText = "Memproses...";
             btnSave.disabled = true;
 
-            const formData = new FormData();
-            formData.append('id', "<?= $id ?>");
-            formData.append('image', signaturePad.toDataURL('image/png'));
-            formData.append('catatan', document.getElementById('catatan').value);
-            formData.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
-            
+            // 1. Kumpul Data
             const selected = [];
             document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
-            formData.append('arahan_pilihan', selected.join(', '));
-
-            // UBAH SINI: Hantar ke URL Google Apps Script anda
-            fetch('https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec', {
-                method: 'POST',
-                body: formData
+            
+            const dataToSend = {
                 id: "<?= $id ?>",
                 image: signaturePad.toDataURL('image/png'),
                 catatan: document.getElementById('catatan').value,
-                fileId: "<?= $surat['drive_file_id'] ?>", // Pastikan kolum ini wujud di DB
-                folderId: "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1"
-    })
-})
-            .then(response => response.text())
-            .then(data => {
-                if (data.trim() === 'SUCCESS') {
-                    // Selepas Google Drive berjaya copy, baru update database
-                    fetch('proses_tandatangan.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(() => {
-                        alert("Berjaya disahkan dan disimpan ke Drive!");
-                        window.location.href = 'homeadmin.php';
-                    });
-                } else {
-                    alert("Ralat Google Drive: " + data);
-                    btnSave.innerText = "Minit & Sahkan ke Drive";
-                    btnSave.disabled = false;
-                }
+                fileId: "<?= $surat['drive_file_id'] ?>", 
+                folderId: "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1",
+                arahan: selected.join(', ')
+            };
+
+            // 2. Hantar ke Google Apps Script (JSON)
+            fetch('https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec', {
+                method: 'POST',
+                mode: 'no-cors', // Penting untuk elak isu CORS
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(() => {
+                // Selepas hantar ke Drive, hantar ke proses_tandatangan.php
+                const fd = new FormData();
+                fd.append('id', "<?= $id ?>");
+                fd.append('catatan', dataToSend.catatan);
+                fd.append('arahan_pilihan', dataToSend.arahan);
+
+                fetch('proses_tandatangan.php', { method: 'POST', body: fd })
+                .then(response => response.text())
+                .then(result => {
+                    alert("Berjaya disahkan!");
+                    window.location.href = 'homeadmin.php';
+                });
             })
             .catch(error => {
-                alert("Ralat Sambungan: " + error);
+                alert("Ralat: " + error);
+                btnSave.innerText = "Minit & Sahkan ke Drive";
                 btnSave.disabled = false;
             });
         });
