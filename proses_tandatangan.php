@@ -1,15 +1,12 @@
 <?php
 // proses_tandatangan.php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    // URL Web App Google anda (Pastikan ada /exec di hujung)
-    $webAppUrl = 'https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec'; 
+    $webAppUrl = 'https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec'; // Ganti dengan URL Google Apps Script
 
     $payload = [
-        "image" => $_POST['image'], // Tandatangan (Base64)
-        "fileName" => "Tandatangan_ID_" . $_POST['id'] . ".png",
+        "id" => $_POST['id'],
+        "image" => $_POST['image'], // Data base64 tandatangan
         "catatan" => $_POST['catatan'],
-        "arahan" => $_POST['arahan_pilihan'],
         "folderId" => '1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1'
     ];
 
@@ -22,11 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = curl_exec($ch);
     curl_close($ch);
 
-    // Hantar respons kembali kepada JavaScript anda
-    if (strpos($response, 'SUCCESS') !== false) {
-        echo 'success';
-    } else {
-        echo 'Gagal menyimpan ke Drive: ' . $response;
-    }
+    echo ($response === 'SUCCESS') ? 'success' : 'Gagal: ' . $response;
 }
 ?>
