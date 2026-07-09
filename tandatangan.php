@@ -124,7 +124,7 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             formData.append('arahan_pilihan', selected.join(', '));
 
             // UBAH SINI: Hantar ke URL Google Apps Script anda
-            fetch('URL_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI', {
+            fetch('https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec', {
                 method: 'POST',
                 body: formData
             })
