@@ -30,7 +30,16 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 20px; }
         .container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        #signature-pad { border: 2px dashed #cbd5e0; width: 100%; height: 180px; border-radius: 8px; cursor: crosshair; background-color: #fafafa; margin-bottom: 15px; }
+        .signature-pad { 
+        border: 2px dashed #cbd5e0; 
+        width: 100%;       /* Lebar penuh mengikut skrin */
+        height: 300px;     /* Tingkatkan tinggi dari 180px ke 300px untuk tandatangan panjang */
+        border-radius: 8px; 
+        cursor: crosshair; 
+        background-color: #ffffff; 
+        margin-bottom: 15px; 
+        touch-action: none; /* Penting untuk telefon */
+    }
         .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; width: 48%; transition: opacity 0.2s; }
         textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; margin-bottom: 15px; }
         .sticky-note { background: #fef08a; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
