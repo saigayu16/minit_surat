@@ -114,10 +114,12 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             btnSave.disabled = true;
 
             const formData = new FormData();
-            formData.append('id', "<?= $id ?>");
+            formData.append('id', "<?= $id ?>"); // Pastikan ini tidak kosong
             formData.append('image', signaturePad.toDataURL('image/png'));
             formData.append('catatan', document.getElementById('catatan').value);
-            
+            // Folder ID perlu dihantar untuk skrip tahu di mana nak cari fail
+            formData.append('folderId', '1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1');
+                        
             const selected = [];
             document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
             formData.append('arahan_pilihan', selected.join(', '));
