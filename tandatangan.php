@@ -23,23 +23,25 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 <head>
     <meta charset="UTF-8">
     <title>Tandatangan Digital</title>
-    <!-- Library untuk Signature Pad -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 20px; }
         .container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .signature-pad { 
-        border: 2px dashed #cbd5e0; 
-        width: 100%;       /* Lebar penuh mengikut skrin */
-        height: 300px;     /* Tingkatkan tinggi dari 180px ke 300px untuk tandatangan panjang */
-        border-radius: 8px; 
-        cursor: crosshair; 
-        background-color: #ffffff; 
-        margin-bottom: 15px; 
-        touch-action: none; /* Penting untuk telefon */
-    }
+        
+        /* Pembetulan: Menggunakan ID #signature-pad */
+        #signature-pad { 
+            border: 2px dashed #cbd5e0; 
+            width: 100%; 
+            height: 300px; 
+            border-radius: 8px; 
+            cursor: crosshair; 
+            background-color: #ffffff; 
+            margin-bottom: 15px; 
+            touch-action: none; 
+            display: block;
+        }
         .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; width: 48%; transition: opacity 0.2s; }
         textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; margin-bottom: 15px; }
         .sticky-note { background: #fef08a; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
@@ -50,8 +52,7 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 <div class="container">
     <div class="panel">
         <h3><i class="fa-solid fa-file-pdf"></i> Dokumen Rujukan</h3>
-        <!-- Guna papar_fail.php untuk elak ralat Forbidden -->
-       <iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="600px" style="border:none;"></iframe>
+        <iframe src="papar_fail.php?id=<?= $id ?>" width="100%" height="600px" style="border:none;"></iframe>
     </div>
 
     <div class="panel">
@@ -73,75 +74,78 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         <canvas id="signature-pad"></canvas>
         
         <div style="display: flex; justify-content: space-between;">
-            <button class="btn" onclick="signaturePad.clear()" style="background:#e53e3e; color:white;">Padam</button>
+            <button class="btn" id="btn-clear" style="background:#e53e3e; color:white;">Padam</button>
             <button class="btn" id="save" style="background:#38a169; color:white;">Minit & Sahkan ke Drive</button>
         </div>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('signature-pad');
-    
-    // PENTING: Set saiz canvas supaya lukisan tak 'hilang' atau 'offset'
-    function resizeCanvas() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear(); // Bersihkan selepas resize
-    }
-
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas(); // Panggil sekali untuk set saiz awal
-
-    const signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgb(255, 255, 255)' // Latar belakang putih
-    });
-
-    const idSurat = "<?= $id ?>";
-
-    document.getElementById('save').addEventListener('click', function() {
-        if (signaturePad.isEmpty()) { 
-            alert("Sila turunkan tandatangan terlebih dahulu!"); 
-            return; 
+    // Pastikan skrip berjalan selepas elemen UI wujud
+    window.onload = function() {
+        const canvas = document.getElementById('signature-pad');
+        
+        function adjustCanvasSize() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
         }
-        
-        const btnSave = document.getElementById('save');
-        btnSave.innerText = "Memproses...";
-        btnSave.disabled = true;
 
-        const formData = new FormData();
-        formData.append('id', idSurat);
-        // Tukar kepada PNG dan pastikan data wujud
-        formData.append('image', signaturePad.toDataURL('image/png'));
-        formData.append('catatan', document.getElementById('catatan').value);
-        formData.append('fileId', "<?= isset($surat['drive_file_id']) ? $surat['drive_file_id'] : '' ?>"); 
+        adjustCanvasSize();
         
-        const selected = [];
-        document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
-        formData.append('arahan_pilihan', selected.join(', '));
+        const signaturePad = new SignaturePad(canvas, {
+            minWidth: 1,
+            maxWidth: 3,
+            penColor: "rgb(0, 0, 0)"
+        });
 
-        fetch('proses_tandatangan.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text())
-        .then(data => {
-            if (data.trim() === 'success') {
-                alert("Berjaya disimpan!");
-                window.location.href = 'homeadmin.php';
-            } else {
-                alert("Ralat: " + data);
+        document.getElementById('btn-clear').addEventListener('click', () => signaturePad.clear());
+
+        const idSurat = "<?= $id ?>";
+
+        document.getElementById('save').addEventListener('click', function() {
+            if (signaturePad.isEmpty()) { 
+                alert("Sila turunkan tandatangan terlebih dahulu!"); 
+                return; 
+            }
+            
+            const btnSave = document.getElementById('save');
+            btnSave.innerText = "Memproses...";
+            btnSave.disabled = true;
+
+            const formData = new FormData();
+            formData.append('id', idSurat);
+            formData.append('image', signaturePad.toDataURL('image/png'));
+            formData.append('catatan', document.getElementById('catatan').value);
+            formData.append('fileId', "<?= isset($surat['drive_file_id']) ? $surat['drive_file_id'] : '' ?>");
+            
+            const selected = [];
+            document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
+            formData.append('arahan_pilihan', selected.join(', '));
+
+            fetch('proses_tandatangan.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data.trim() === 'success') {
+                    alert("Berjaya disimpan!");
+                    window.location.href = 'homeadmin.php';
+                } else {
+                    alert("Ralat: " + data);
+                    btnSave.innerText = "Minit & Sahkan ke Drive";
+                    btnSave.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert("Ralat Sambungan: " + error);
                 btnSave.innerText = "Minit & Sahkan ke Drive";
                 btnSave.disabled = false;
-            }
-        })
-        .catch(error => {
-            alert("Ralat Sambungan: " + error);
-            btnSave.innerText = "Minit & Sahkan ke Drive";
-            btnSave.disabled = false;
+            });
         });
-    });
+    };
 </script>
 </body>
 </html>
