@@ -114,34 +114,40 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             btnSave.disabled = true;
 
             const formData = new FormData();
-            formData.append('id', "<?= $id ?>"); // Pastikan ini tidak kosong
+            formData.append('id', "<?= $id ?>");
             formData.append('image', signaturePad.toDataURL('image/png'));
             formData.append('catatan', document.getElementById('catatan').value);
-            // Folder ID perlu dihantar untuk skrip tahu di mana nak cari fail
-            formData.append('fileId', "<?= $surat['drive_file_id'] ?>");
-                        
+            formData.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
+            
             const selected = [];
             document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
             formData.append('arahan_pilihan', selected.join(', '));
 
-            fetch('proses_tandatangan.php', {
+            // UBAH SINI: Hantar ke URL Google Apps Script anda
+            fetch('URL_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.text())
             .then(data => {
-                if (data.trim() === 'success') {
-                    alert("Berjaya disimpan!");
-                    window.location.href = 'homeadmin.php';
+                if (data.trim() === 'SUCCESS') {
+                    // Selepas Google Drive berjaya copy, baru update database
+                    fetch('proses_tandatangan.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(() => {
+                        alert("Berjaya disahkan dan disimpan ke Drive!");
+                        window.location.href = 'homeadmin.php';
+                    });
                 } else {
-                    alert("Ralat: " + data);
+                    alert("Ralat Google Drive: " + data);
                     btnSave.innerText = "Minit & Sahkan ke Drive";
                     btnSave.disabled = false;
                 }
             })
             .catch(error => {
                 alert("Ralat Sambungan: " + error);
-                btnSave.innerText = "Minit & Sahkan ke Drive";
                 btnSave.disabled = false;
             });
         });
