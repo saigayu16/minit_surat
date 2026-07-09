@@ -126,7 +126,7 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
                 .then(response => response.text())
                 .then(result => {
                     alert("Berjaya disahkan!");
-                    window.location.href = 'homeadmin.php';
+                    window.location.href = 'homedirector.php';
                 });
             })
             .catch(error => {
