@@ -5,6 +5,7 @@ session_start();
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // 1. Sanitasi input
     $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan']);
     $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima']);
     $daripada = mysqli_real_escape_string($conn, $_POST['daripada']);
@@ -12,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $kolej = mysqli_real_escape_string($conn, $_POST['kolej']);
     $target_role = mysqli_real_escape_string($conn, $_POST['target_role']);
     
+    // 2. Dapatkan Emel Penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
     $stmt_email->bind_param("s", $target_role);
     $stmt_email->execute();
@@ -20,10 +22,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
 
-    // Proses Fail ke Google Drive
+    // 3. Proses Fail & Hantar ke Google Drive + Folder Uploads
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
-        $file_name = $_FILES['fail_surat']['name'];
-        $base64_file = base64_encode(file_get_contents($_FILES['fail_surat']['tmp_name']));
+        $file_name = time() . '_' . $_FILES['fail_surat']['name']; // Nama unik untuk elak pertindihan
+        $file_path = 'uploads/' . $file_name;
+        
+        // Simpan ke folder tempatan (Folder 'uploads' mesti wujud di server anda)
+        if (!is_dir('uploads')) mkdir('uploads', 0777, true);
+        move_uploaded_file($_FILES['fail_surat']['tmp_name'], $file_path);
+
+        $base64_file = base64_encode(file_get_contents($file_path));
         $payload = json_encode(['fileData' => $base64_file, 'mimeType' => 'application/pdf', 'fileName' => $file_name]);
         
         $ch_drive = curl_init("https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec");
@@ -34,13 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
 
-        // Pastikan ID tidak terlalu panjang untuk database
         $drive_file_id = ($http_code_drive == 200 && strlen($drive_response) < 200) ? $drive_response : "GAGAL_UPLOAD";
     } else {
-        die("Fail tidak dijumpai.");
+        die("Fail tidak dijumpai atau ralat muat naik.");
     }
 
-    // Integrasi Brevo
+    // 4. Integrasi API Brevo (E-mel)
     $api_key = getenv('BREVO_API_KEY');
     $data = ["sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"], "to" => [["email" => $email_penerima]], "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan, "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda.", "attachment" => [["content" => $base64_file, "name" => $file_name]]];
 
@@ -53,9 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    // Simpan ke Database (Langkah Akhir)
-    $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
-    $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
+    // 5. Simpan ke Database
+    // NOTA: Saya tambah kolum 'fail_surat' supaya view_surat boleh baca nama fail ini
+    $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id, fail_surat) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?, ?)");
+    $stmt->bind_param("ssssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id, $file_name);
     
     if ($stmt->execute()) {
         echo "<script>alert('Berjaya dihantar!'); window.location='homeadmin.php';</script>";
