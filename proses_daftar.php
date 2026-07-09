@@ -22,15 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
 
-    // 3. Proses Fail & Hantar ke Google Drive + Folder Uploads
+    // 3. Proses Fail (Upload ke Server & Google Drive)
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
-        $file_name = time() . '_' . $_FILES['fail_surat']['name']; // Nama unik untuk elak pertindihan
-        $file_path = 'uploads/' . $file_name;
+        $file_name = time() . '_' . $_FILES['fail_surat']['name'];
+        $target_dir = "uploads/";
+        $file_path = $target_dir . $file_name;
         
-        // Simpan ke folder tempatan (Folder 'uploads' mesti wujud di server anda)
-        if (!is_dir('uploads')) mkdir('uploads', 0777, true);
+        // Simpan ke folder tempatan
+        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
         move_uploaded_file($_FILES['fail_surat']['tmp_name'], $file_path);
 
+        // Hantar ke Google Drive
         $base64_file = base64_encode(file_get_contents($file_path));
         $payload = json_encode(['fileData' => $base64_file, 'mimeType' => 'application/pdf', 'fileName' => $file_name]);
         
@@ -61,12 +63,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     curl_close($ch);
 
     // 5. Simpan ke Database
-    // NOTA: Saya tambah kolum 'fail_surat' supaya view_surat boleh baca nama fail ini
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id, fail_surat) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?, ?)");
     $stmt->bind_param("ssssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id, $file_name);
     
     if ($stmt->execute()) {
-        echo "<script>alert('Berjaya dihantar!'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('Berjaya dihantar ke Drive & Server!'); window.location='homeadmin.php';</script>";
     } else {
         echo "Ralat Database: " . $stmt->error;
     }
