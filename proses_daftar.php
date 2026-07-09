@@ -42,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
 
-        // Jika berjaya, simpan ID, jika gagal tandakan ralat
         $drive_file_id = ($http_code_drive == 200) ? trim($drive_response) : "GAGAL_UPLOAD";
     } else {
         die("Fail tidak dijumpai atau ralat muat naik.");
