@@ -79,68 +79,48 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 </div>
 
 <script>
-    window.onload = function() {
-        const canvas = document.getElementById('signature-pad');
-        const signaturePad = new SignaturePad(canvas, { minWidth: 1, maxWidth: 3, penColor: "rgb(0, 0, 0)" });
+document.getElementById('save').addEventListener('click', function() {
+    if (signaturePad.isEmpty()) { 
+        alert("Sila turunkan tandatangan terlebih dahulu!"); 
+        return; 
+    }
+    
+    const btnSave = document.getElementById('save');
+    btnSave.innerText = "Memproses...";
+    btnSave.disabled = true;
 
-        document.getElementById('btn-clear').addEventListener('click', () => signaturePad.clear());
+    // Kumpul arahan
+    const selected = [];
+    document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
+    
+    // Bina FormData dengan nama 'fd'
+    const fd = new FormData();
+    fd.append('id', "<?= $id ?>");
+    fd.append('image', signaturePad.toDataURL('image/png'));
+    fd.append('catatan', document.getElementById('catatan').value);
+    fd.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
+    fd.append('folderId', "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1");
+    fd.append('arahan_pilihan', selected.join(', '));
 
-        document.getElementById('save').addEventListener('click', function() {
-            if (signaturePad.isEmpty()) { 
-                alert("Sila turunkan tandatangan terlebih dahulu!"); 
-                return; 
-            }
-            
-            const btnSave = document.getElementById('save');
-            btnSave.innerText = "Memproses...";
-            btnSave.disabled = true;
-
-            // 1. Kumpul Data
-            const selected = [];
-            document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
-            
-            const dataToSend = {
-                id: "<?= $id ?>",
-                image: signaturePad.toDataURL('image/png'),
-                catatan: document.getElementById('catatan').value,
-                fileId: "<?= $surat['drive_file_id'] ?>", 
-                folderId: "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1",
-                arahan: selected.join(', ')
-            };
-
-            // 2. Hantar ke Google Apps Script (JSON)
-            fetch('https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec', {
-                method: 'POST',
-                mode: 'no-cors', // Penting untuk elak isu CORS
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToSend)
-            })
-            .then(() => {
-                // Selepas hantar ke Drive, hantar ke proses_tandatangan.php
-                const fd = new FormData();
-fd.append('id', "<?= $id ?>");
-fd.append('catatan', document.getElementById('catatan').value);
-fd.append('arahan_pilihan', selected.join(', '));
-fd.append('image', signaturePad.toDataURL('image/png'));
-fd.append('fileId', "<?= $surat['drive_file_id'] ?>");
-fd.append('folderId', "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1");
-
-fetch('proses_tandatangan.php', { 
-    method: 'POST', 
-    body: fd 
-})
-.then(response => response.text())
-.then(result => {
-    if (result.trim() === 'success') {
-        alert("Berjaya disahkan!");
-        window.location.href = 'homedirector.php';
-    } else {
-        alert("Ralat: " + result);
+    // Hantar ke proses_tandatangan.php
+    fetch('proses_tandatangan.php', { method: 'POST', body: fd })
+    .then(response => response.text())
+    .then(result => {
+        if (result.trim() === 'success') {
+            alert("Berjaya disahkan!");
+            window.location.href = 'homedirector.php';
+        } else {
+            alert("Ralat: " + result);
+            btnSave.innerText = "Minit & Sahkan ke Drive";
+            btnSave.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert("Ralat Rangkaian: " + error);
         btnSave.innerText = "Minit & Sahkan ke Drive";
         btnSave.disabled = false;
-    }
+    });
 });
-        });
     };
 </script>
 </body>
