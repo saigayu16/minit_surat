@@ -80,8 +80,6 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-
 <script>
     // 1. Initialize Signature Pad
     const canvas = document.querySelector("canvas");
@@ -130,6 +128,10 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             btnSave.disabled = false;
         });
     });
+</script>
+    <script>
+    var canvas = document.querySelector('canvas');
+    var signaturePad = new SignaturePad(canvas);
 </script>
 </body>
 </html>
