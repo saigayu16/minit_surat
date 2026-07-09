@@ -118,29 +118,28 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             .then(() => {
                 // Selepas hantar ke Drive, hantar ke proses_tandatangan.php
                 const fd = new FormData();
-                fd.append('id', "<?= $id ?>");
-                fd.append('catatan', dataToSend.catatan);
-                fd.append('arahan_pilihan', dataToSend.arahan);
+fd.append('id', "<?= $id ?>");
+fd.append('catatan', document.getElementById('catatan').value);
+fd.append('arahan_pilihan', selected.join(', '));
+fd.append('image', signaturePad.toDataURL('image/png'));
+fd.append('fileId', "<?= $surat['drive_file_id'] ?>");
+fd.append('folderId', "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1");
 
-                fetch('proses_tandatangan.php', {
-                method: 'POST',
-                body: formData // Pastikan FormData anda mengandungi 'id'
-            })
-            .then(response => response.text())
-            .then(result => {
-                if (result.trim() === 'success') {
-                    alert("Berjaya disahkan!");
-                    window.location.href = 'homedirector.php'; // Redirect ke dashboard
-                } else {
-                    alert("Ralat: " + result);
-                }
-            });
-            })
-            .catch(error => {
-                alert("Ralat: " + error);
-                btnSave.innerText = "Minit & Sahkan ke Drive";
-                btnSave.disabled = false;
-            });
+fetch('proses_tandatangan.php', { 
+    method: 'POST', 
+    body: fd 
+})
+.then(response => response.text())
+.then(result => {
+    if (result.trim() === 'success') {
+        alert("Berjaya disahkan!");
+        window.location.href = 'homedirector.php';
+    } else {
+        alert("Ralat: " + result);
+        btnSave.innerText = "Minit & Sahkan ke Drive";
+        btnSave.disabled = false;
+    }
+});
         });
     };
 </script>
