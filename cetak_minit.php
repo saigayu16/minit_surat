@@ -12,73 +12,97 @@ $row = $stmt->get_result()->fetch_assoc();
 
 if (!$row) { die("Rekod tidak ditemui."); }
 
-// Data
+// Variabel Data
 $status = strtoupper(trim($row['status'] ?? 'TIADA STATUS'));
 $no_rujukan = htmlspecialchars($row['no_rujukan'] ?? '-');
 $tarikh_terima = !empty($row['tarikh_terima']) ? date('d/m/Y', strtotime($row['tarikh_terima'])) : '-';
 $daripada = htmlspecialchars($row['daripada'] ?? '-');
 $didaftarkan_oleh = htmlspecialchars($row['didaftarkan_oleh'] ?? 'Admin');
 $perkara = htmlspecialchars($row['perkara'] ?? '-');
-$catatan = $row['catatan'] ?? 'Tiada catatan.';
-$arahan = $row['arahan_pilihan'] ?? 'Tiada arahan';
+$catatan = !empty($row['catatan']) ? $row['catatan'] : 'Tiada catatan tambahan diberikan.';
+$arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'Tiada Arahan');
+
+// Data Tandatangan
+$signature_img = !empty($row['tandatangan_fail']) ? 'uploads/' . $row['tandatangan_fail'] : "";
+$signed_by = htmlspecialchars($row['signed_by'] ?? 'PENGARAH'); // Role penandatangan
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 
-// LOGIK TANDATANGAN:
-// Jika kolum 'tandatangan' anda menyimpan nama fail (cth: signature.png)
-// Kita sambungkan dengan folder 'uploads/'
-$sig_file = $row['tandatangan']; 
-$signature_src = (!empty($sig_file)) ? 'uploads/' . $sig_file : "";
-
-// Fail Dokumen (Gunakan papar_fail.php untuk elak Forbidden)
-$url_dokumen = "papar_fail.php?id=" . $id; 
+// Pautan Dokumen (Menggunakan papar_fail.php untuk mengelak 'Forbidden')
+$url_dokumen = "papar_fail.php?id=" . $id;
 ?>
 
 <!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>Cetak Minit - <?= $no_rujukan ?></title>
+    <title>Borang Minit - <?= $no_rujukan ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; padding: 20px; background-color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
-        .page-box { background: #fff; width: 210mm; margin: 0 auto 30px auto; padding: 60px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .document-view-box { width: 210mm; height: 600px; margin: 0 auto 30px auto; border: 2px solid #cbd5e1; background: #fff; }
-        .footer-signature { display: flex; justify-content: flex-end; margin-top: 40px; }
-        .sig-box { border: 1px solid #000; padding: 10px; width: 200px; text-align: center; }
-        .sig-box img { max-width: 150px; height: auto; }
-        @media print { .no-print { display: none !important; } body { background: #fff; } .page-box { box-shadow: none; border: none; } }
+        body { margin: 0; padding: 20px; background-color: #e2e8f0; background-image: url('daftarsurat.jpg'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat; font-family: 'Segoe UI', sans-serif; }
+        .page-box { background: #fff; width: 210mm; margin: 0 auto 30px auto; padding: 60px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .document-view-box { width: 210mm; height: 600px; margin: 0 auto 30px auto; border: 2px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #fff; }
+        .header-modern { border-bottom: 2px solid #0f172a; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .header-modern h1 { margin: 0; font-size: 24px; color: #0f172a; text-transform: uppercase; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .info-label { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px; }
+        .sticky-note { background: #fff; border: 2px dashed #cbd5e1; padding: 25px; margin: 30px 0; position: relative; min-height: 100px; }
+        .sticky-note::before { content: "CATATAN / MINIT ARAHAN"; position: absolute; top: -12px; left: 20px; background: #fff; padding: 0 10px; font-size: 11px; font-weight: bold; color: #2563eb; }
+        .catatan-content { color: #334155; line-height: 1.6; font-size: 15px; }
+        .footer-signature { display: flex; justify-content: flex-end; margin-top: 60px; }
+        .sig-box { border: 1px solid #e2e8f0; padding: 15px; width: 220px; text-align: center; border-radius: 4px; background: #f8fafc; }
+        .btn-print { background: #2563eb; color: white; padding: 15px 40px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        @media print { .no-print { display: none !important; } body { background: #fff; padding: 0; } .page-box { box-shadow: none; border: none; margin: 0 auto; padding: 20mm; } }
     </style>
 </head>
 <body>
 
-<!-- Bahagian Dokumen -->
 <div class="document-view-box no-print">
+    <div style="padding: 10px; background: #f1f5f9; border-bottom: 1px solid #ddd; font-size: 12px; font-weight: bold;">
+        <i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL
+    </div>
     <iframe src="<?= $url_dokumen ?>" width="100%" height="100%" frameborder="0"></iframe>
 </div>
 
-<!-- Bahagian Borang -->
 <div class="page-box">
-    <h1>MINIT CERAIAN: <?= $no_rujukan ?></h1>
-    <p>Status: <strong><?= $status ?></strong></p>
-    
+    <div class="header-modern">
+        <h1>MINIT CERAIAN</h1>
+        <div style="color: #10b981; font-weight: bold;"><i class="fa-solid fa-check-circle"></i> <?= $status ?></div>
+    </div>
+
+    <div class="info-grid">
+        <div><div class="info-label">No. Rujukan</div><strong><?= $no_rujukan ?></strong></div>
+        <div><div class="info-label">Tarikh Terima</div><strong><?= $tarikh_terima ?></strong></div>
+        <div><div class="info-label">Daripada</div><strong><?= $daripada ?></strong></div>
+        <div><div class="info-label">Didaftarkan Oleh</div><strong><?= $didaftarkan_oleh ?></strong></div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <div class="info-label">Perkara / Tajuk</div>
+        <div style="font-weight: 600; font-size: 16px; color: #1e293b; padding: 10px 0; border-bottom: 1px solid #e2e8f0;"><?= $perkara ?></div>
+    </div>
+
     <div class="sticky-note">
-        <p><strong>ARAHAN:</strong> <?= htmlspecialchars($arahan) ?></p>
-        <p><?= nl2br(htmlspecialchars($catatan)) ?></p>
+        <div style="color: #2563eb; font-weight: bold; margin-bottom: 5px;">ARAHAN: <?= $arahan ?></div>
+        <div class="catatan-content"><?= nl2br(htmlspecialchars($catatan)) ?></div>
     </div>
 
     <div class="footer-signature">
-        <?php if (!empty($signature_src) && file_exists($signature_src)): ?>
+        <?php if (strcasecmp($status, 'SELESAI') == 0 && !empty($signature_img)): ?>
             <div class="sig-box">
-                <img src="<?= $signature_src ?>" alt="Tandatangan">
-                <div style="border-top: 1px solid #000; margin-top: 5px;">PENGARAH<br><?= $tarikh_sah ?></div>
+                <img src="<?= $signature_img ?>" style="max-height: 50px; width: auto;">
+                <div style="font-size: 11px; margin-top: 8px; border-top: 1px solid #cbd5e1; padding-top: 5px; text-transform: uppercase;">
+                    <b><?= $signed_by ?></b><br><?= $tarikh_sah ?>
+                </div>
             </div>
         <?php else: ?>
-            <div style="color: red;">(Tandatangan belum dimuat naik)</div>
+            <div style="color: #94a3b8; font-style: italic;">(Menunggu tandatangan pengarah)</div>
         <?php endif; ?>
     </div>
 </div>
 
-<button class="no-print" onclick="window.print()">CETAK</button>
+<button class="btn-print no-print" onclick="window.print()">
+    <i class="fa-solid fa-print"></i> CETAK BORANG SAHAJA
+</button>
 
 </body>
 </html>
