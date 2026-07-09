@@ -13,5 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = curl_exec($ch);
     echo ($response === 'SUCCESS') ? 'success' : 'Ralat: ' . $response;
     curl_close($ch);
-}
+
+    $sql = "UPDATE minit_surat SET status = 'SELESAI', catatan_pengarah = ?, arahan_pengarah = ? WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssi", $_POST['catatan'], $_POST['arahan_pilihan'], $id);
+    $stmt->execute();
+    }
 ?>
