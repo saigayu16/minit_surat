@@ -72,35 +72,49 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 
 <script>
     const canvas = document.getElementById('signature-pad');
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    const signaturePad = new SignaturePad(canvas);
+    
+    // PENTING: Set saiz canvas supaya lukisan tak 'hilang' atau 'offset'
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear(); // Bersihkan selepas resize
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas(); // Panggil sekali untuk set saiz awal
+
+    const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255, 255, 255)' // Latar belakang putih
+    });
+
     const idSurat = "<?= $id ?>";
 
     document.getElementById('save').addEventListener('click', function() {
-        if (signaturePad.isEmpty()) { alert("Sila tandatangan!"); return; }
+        if (signaturePad.isEmpty()) { 
+            alert("Sila turunkan tandatangan terlebih dahulu!"); 
+            return; 
+        }
         
         const btnSave = document.getElementById('save');
         btnSave.innerText = "Memproses...";
         btnSave.disabled = true;
 
-        // ... di dalam script anda ...
         const formData = new FormData();
         formData.append('id', idSurat);
+        // Tukar kepada PNG dan pastikan data wujud
         formData.append('image', signaturePad.toDataURL('image/png'));
         formData.append('catatan', document.getElementById('catatan').value);
-        // Pastikan anda ada drive_file_id dalam database anda
-        formData.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
+        formData.append('fileId', "<?= isset($surat['drive_file_id']) ? $surat['drive_file_id'] : '' ?>"); 
         
         const selected = [];
         document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
         formData.append('arahan_pilihan', selected.join(', '));
-        
+
         fetch('proses_tandatangan.php', {
             method: 'POST',
             body: formData
-        })
-// ... selebihnya kod anda ...
         })
         .then(response => response.text())
         .then(data => {
@@ -112,6 +126,11 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
                 btnSave.innerText = "Minit & Sahkan ke Drive";
                 btnSave.disabled = false;
             }
+        })
+        .catch(error => {
+            alert("Ralat Sambungan: " + error);
+            btnSave.innerText = "Minit & Sahkan ke Drive";
+            btnSave.disabled = false;
         });
     });
 </script>
