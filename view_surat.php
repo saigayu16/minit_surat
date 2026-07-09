@@ -4,22 +4,18 @@ include('db.php');
 if (!isset($_GET['id'])) { die("ID tidak dijumpai."); }
 $id = intval($_GET['id']);
 
-// Mengambil data surat
+// Mengambil data surat (Sila pastikan kolum 'tandatangan' wujud dalam jadual anda)
 $result = $conn->query("SELECT * FROM minit_surat WHERE id = $id");
 $row = $result->fetch_assoc();
 
 if (!$row) { die("Data surat tidak ditemui."); }
 
-// Tentukan sumber fail untuk dipaparkan
+// Tentukan sumber fail
 $fail_tempatan = "uploads/" . $row['fail_surat'];
-$guna_drive = false;
-
-// Logik paparan: Guna uploads/ jika fail wujud, jika tidak guna Drive
 if (!empty($row['fail_surat']) && file_exists($fail_tempatan)) {
     $sumber_fail = $fail_tempatan;
 } else if (!empty($row['drive_file_id']) && $row['drive_file_id'] !== "GAGAL_UPLOAD") {
     $sumber_fail = "https://drive.google.com/file/d/" . $row['drive_file_id'] . "/preview";
-    $guna_drive = true;
 } else {
     $sumber_fail = null;
 }
@@ -28,13 +24,17 @@ if (!empty($row['fail_surat']) && file_exists($fail_tempatan)) {
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <title>Paparan Rasmi - <?= htmlspecialchars($row['no_rujukan']) ?></title>
     <style>
-        body { background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('background.jpg'); background-size: cover; background-position: center; font-family: 'Segoe UI', sans-serif; }
-        .wrapper { max-width: 1200px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; }
-        .card { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-        .info-label { width: 150px; font-weight: bold; color: #4a5568; }
-        .btn-nav { padding: 8px 15px; background: #4a5568; color: white; text-decoration: none; border-radius: 5px; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 20px; }
+        .wrapper { max-width: 1300px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .signature-box { margin-top: 20px; padding: 15px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; }
+        .signature-img { max-width: 200px; height: auto; display: block; margin-top: 10px; }
+        iframe { width: 100%; height: 60vh; border: none; }
+        .btn-nav { padding: 10px 16px; background: #4a5568; color: white; text-decoration: none; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -42,34 +42,30 @@ if (!empty($row['fail_surat']) && file_exists($fail_tempatan)) {
 <div class="wrapper">
     <div class="card">
         <h3>📄 Dokumen: <?= htmlspecialchars($row['no_rujukan']) ?></h3>
-        
         <?php if ($sumber_fail): ?>
-            <iframe src="<?= $sumber_fail ?>" width="100%" height="600px" style="border:1px solid #ddd;"></iframe>
+            <iframe src="<?= $sumber_fail ?>"></iframe>
         <?php else: ?>
-            <div style="height: 600px; display: flex; align-items: center; justify-content: center; background: #eee;">
-                <p>Dokumen tidak dijumpai di server mahupun di Google Drive.</p>
-            </div>
+            <div style="height: 400px; display: flex; align-items: center; justify-content: center; background: #eee;">Dokumen tidak dijumpai.</div>
         <?php endif; ?>
     </div>
 
     <div class="card">
         <h2>BORANG MINIT</h2>
-        <div class="info-row"><div class="info-label">Rujukan:</div> <div><?= htmlspecialchars($row['no_rujukan']) ?></div></div>
-        <div class="info-row"><div class="info-label">Kolej:</div> <div><?= htmlspecialchars($row['kolej'] ?? '-') ?></div></div>
-        <hr>
         <p><strong>Catatan:</strong> <?= nl2br(htmlspecialchars($row['catatan'] ?? 'Tiada')) ?></p>
         
-        <!-- Navigasi Kronologi -->
-        <div style="margin-top: 20px; display: flex; justify-content: space-between;">
-            <?php
-            $prev = $conn->query("SELECT id FROM minit_surat WHERE id < $id ORDER BY id DESC LIMIT 1")->fetch_assoc();
-            $next = $conn->query("SELECT id FROM minit_surat WHERE id > $id ORDER BY id ASC LIMIT 1")->fetch_assoc();
-            ?>
-            <a href="view_surat.php?id=<?= $prev['id'] ?? $id ?>" class="btn-nav" <?= !$prev ? 'style="visibility:hidden"' : '' ?>>⬅ Sebelumnya</a>
-            <a href="view_surat.php?id=<?= $next['id'] ?? $id ?>" class="btn-nav" <?= !$next ? 'style="visibility:hidden"' : '' ?>>Seterusnya ➡</a>
+        <!-- Bahagian Tandatangan -->
+        <div class="signature-box">
+            <strong>Tandatangan Pengarah:</strong>
+            <?php if (!empty($row['tandatangan'])): ?>
+                <img src="<?= $row['tandatangan'] ?>" alt="Tandatangan" class="signature-img">
+            <?php else: ?>
+                <p style="color: #94a3b8; font-style: italic; margin-top: 10px;">Belum ditandatangani.</p>
+            <?php endif; ?>
         </div>
-        <br>
-        <a href="homedirector.php">⬅ Kembali ke Dashboard</a>
+
+        <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+            <a href="homedirector.php" style="color:var(--primary); text-decoration:none;">⬅ Kembali ke Dashboard</a>
+        </div>
     </div>
 </div>
 
