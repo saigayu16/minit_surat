@@ -101,12 +101,15 @@ if($count_kkkb) $total_kepala_batas = $count_kkkb->fetch_assoc()['total'];
                             <td style='font-style:italic; color:#64748b;'>$catatan_pendek</td>
                             <td>";
                         
-                        // Logik tukar butang automatik
-                        if (strcasecmp($status, 'SELESAI') == 0) {
-                            echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
-                        } else {
-                            echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign"><i class="fa-solid fa-pen-nib"></i> Sahkan</a>';
-                        }
+                        $status = trim($row['status']); 
+
+                    if (strcasecmp($status, 'SELESAI') == 0) {
+                        // Jika status SELESAI, paparkan butang Lihat
+                        echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view">Lihat</a>';
+                    } else {
+                        // Jika status BARU atau lain-lain, paparkan butang Sahkan
+                        echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign">Sahkan</a>';
+                    }
                         echo "</td></tr>";
                     }
                 } else {
