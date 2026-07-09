@@ -3,7 +3,7 @@
 $input = json_decode(file_get_contents('php://input'), true);
 
 // TAMPAL URL ANDA DI SINI (Contoh: https://script.google.com/...)
-$webAppUrl = 'https://script.google.com/macros/s/AKfycbwy4aQdfAN3M_72NdFQCFosvM9DAe74BIJaRSr4-0orntxrBV-0JdOqaF4qMg_aBUU_/exec'; 
+$webAppUrl = 'https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec'; 
 
 $payload = json_encode([
     "image" => $input['image'], // Base64 dari canvas
