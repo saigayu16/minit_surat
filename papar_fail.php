@@ -10,14 +10,17 @@ if ($id > 0) {
     $row = $result->fetch_assoc();
 
     if ($row) {
-        // Keutamaan 1: Jika fail ada dalam folder 'uploads/' (fail tempatan)
+        // Keutamaan 1: Fail Tempatan
+        // Kita berikan laluan penuh/tepat untuk elak ralat
         if (!empty($row['fail_surat']) && file_exists("uploads/" . $row['fail_surat'])) {
+            // Untuk paparan fail dalam iframe yang lebih stabil, 
+            // jika fail adalah PDF, kita berikan terus laluan fail tersebut.
             echo "uploads/" . $row['fail_surat'];
         } 
-        // Keutamaan 2: Jika tiada fail tempatan, cuba ambil pautan Google Drive
+        // Keutamaan 2: Google Drive
+        // PENTING: Gunakan /preview supaya ia terus dipaparkan (bukan /view)
         else if (!empty($row['drive_file_id']) && $row['drive_file_id'] !== "GAGAL_UPLOAD") {
-            // Ini adalah pautan untuk paparan Google Drive
-            echo "https://drive.google.com/file/d/" . $row['drive_file_id'] . "/view";
+            echo "https://drive.google.com/file/d/" . $row['drive_file_id'] . "/preview";
         } 
         else {
             echo "ERROR";
