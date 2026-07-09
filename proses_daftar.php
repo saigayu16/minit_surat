@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $kolej = mysqli_real_escape_string($conn, $_POST['kolej']);
     $target_role = mysqli_real_escape_string($conn, $_POST['target_role']);
     
-    // Ambil emel penerima berdasarkan role
+    // Ambil emel penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
     $stmt_email->bind_param("s", $target_role);
     $stmt_email->execute();
@@ -26,14 +26,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Proses fail
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_name = $_FILES['fail_surat']['name'];
-        $file_data = file_get_contents($_FILES['fail_surat']['tmp_name']);
+        $file_tmp = $_FILES['fail_surat']['tmp_name'];
+        $file_data = file_get_contents($file_tmp);
         $base64_file = base64_encode($file_data);
+
+        // --- TAMBAHAN: HANTAR KE GOOGLE DRIVE ---
+        $google_script_url = "MASUKKAN_URL_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI"; 
+        $payload = json_encode(['fileData' => $base64_file, 'mimeType' => 'application/pdf', 'fileName' => $file_name]);
+        
+        $ch_drive = curl_init($google_script_url);
+        curl_setopt($ch_drive, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch_drive, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch_drive, CURLOPT_FOLLOWLOCATION, true);
+        $drive_file_id = curl_exec($ch_drive);
+        curl_close($ch_drive);
+        // ----------------------------------------
     } else {
         echo "<script>alert('Fail diperlukan.'); window.history.back();</script>";
         exit;
     }
 
-    // Integrasi API (Manual cURL)
+    // Integrasi API Brevo
     $api_key = getenv('BREVO_API_KEY');
     $data = [
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
@@ -53,9 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     curl_close($ch);
 
     if ($http_code == 201) {
-        $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, fail_surat) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
-        $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $file_data);
+        // Simpan ke DB termasuk drive_file_id
+        $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, fail_surat, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?, ?)");
+        $stmt->bind_param("ssssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $file_data, $drive_file_id);
         $stmt->execute();
+        
         echo "<script>alert('Berjaya dihantar!'); window.location='homeadmin.php';</script>";
     } else {
         echo "<script>alert('E-mel gagal (Ralat: $http_code)'); window.history.back();</script>";
