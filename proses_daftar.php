@@ -56,24 +56,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         "attachment" => [["content" => $base64_file, "name" => $file_name]]
     ];
 
-    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    // --- TAMBAHAN: HANTAR KE GOOGLE DRIVE ---
+$google_script_url = "https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec"; 
+$payload = json_encode(['fileData' => $base64_file, 'mimeType' => 'application/pdf', 'fileName' => $file_name]);
 
-    if ($http_code == 201) {
-        // Simpan ke DB termasuk drive_file_id
-        $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, fail_surat, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?, ?)");
-        $stmt->bind_param("ssssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $file_data, $drive_file_id);
-        $stmt->execute();
-        
-        echo "<script>alert('Berjaya dihantar!'); window.location='homeadmin.php';</script>";
-    } else {
-        echo "<script>alert('E-mel gagal (Ralat: $http_code)'); window.history.back();</script>";
-    }
+$ch_drive = curl_init($google_script_url);
+curl_setopt($ch_drive, CURLOPT_POSTFIELDS, $payload);
+curl_setopt($ch_drive, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch_drive, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch_drive, CURLOPT_HTTPHEADER, ['Content-Type: application/json']); // Penting!
+$drive_response = curl_exec($ch_drive);
+$http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
+curl_close($ch_drive);
+
+// Pastikan respon hanya ID (biasanya 30-40 aksara)
+if ($http_code_drive == 200) {
+    $drive_file_id = trim($drive_response); 
+} else {
+    // Jika gagal, jangan simpan mesej ralat ke DB untuk elak "Data too long"
+    $drive_file_id = "GAGAL_UPLOAD"; 
+}
 }
 ?>
