@@ -8,7 +8,7 @@ $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
 
 if ($row && !empty($row['drive_file_id']) && $row['drive_file_id'] !== "GAGAL_UPLOAD") {
-    // Hanya "echo" URL, bukan redirect header
+    // Hanya cetak URL tanpa header redirect
     echo "https://drive.google.com/file/d/" . trim($row['drive_file_id']) . "/preview";
 } else {
     echo "ERROR";
