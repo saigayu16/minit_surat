@@ -29,8 +29,6 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 20px; }
         .container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
-        /* Pembetulan: Menggunakan ID #signature-pad */
         #signature-pad { 
             border: 2px dashed #cbd5e0; 
             width: 100%; 
@@ -81,10 +79,13 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 </div>
 
 <script>
-    // Pastikan skrip berjalan selepas elemen UI wujud
     window.onload = function() {
         const canvas = document.getElementById('signature-pad');
         
+        // Debugging: Semak ID yang diambil dari PHP dan paparkan di console F12
+        const fileIdFromPhp = "<?= isset($surat['drive_file_id']) ? $surat['drive_file_id'] : '' ?>";
+        console.log("File ID dari Database:", fileIdFromPhp);
+
         function adjustCanvasSize() {
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             canvas.width = canvas.offsetWidth * ratio;
@@ -102,8 +103,6 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 
         document.getElementById('btn-clear').addEventListener('click', () => signaturePad.clear());
 
-        const idSurat = "<?= $id ?>";
-
         document.getElementById('save').addEventListener('click', function() {
             if (signaturePad.isEmpty()) { 
                 alert("Sila turunkan tandatangan terlebih dahulu!"); 
@@ -115,10 +114,10 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             btnSave.disabled = true;
 
             const formData = new FormData();
-            formData.append('id', idSurat);
+            formData.append('id', "<?= $id ?>");
             formData.append('image', signaturePad.toDataURL('image/png'));
             formData.append('catatan', document.getElementById('catatan').value);
-            formData.append('fileId', "<?= isset($surat['drive_file_id']) ? $surat['drive_file_id'] : '' ?>");
+            formData.append('fileId', fileIdFromPhp);
             
             const selected = [];
             document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
