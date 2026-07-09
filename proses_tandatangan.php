@@ -1,12 +1,12 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // URL Web App Google (PASTIKAN DITAMBAH /exec DI HUJUNG)
+    // URL Web App Google (Pastikan berakhir dengan /exec)
     $webAppUrl = 'https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec'; 
 
     $payload = [
         "id" => $_POST['id'],
-        "image" => $_POST['image'],
-        "fileId" => $_POST['fileId'], // ID fail PDF asal
+        "image" => $_POST['image'], // Tandatangan Base64
+        "fileId" => $_POST['fileId'], // ID dokumen asal
         "catatan" => $_POST['catatan'],
         "arahan" => $_POST['arahan_pilihan'],
         "folderId" => '1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1'
@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = curl_exec($ch);
     curl_close($ch);
 
-    echo (trim($response) === 'SUCCESS') ? 'success' : 'Gagal: ' . $response;
+    // Debugging: Jika ada ralat, ia akan terpapar di alert browser anda
+    echo ($response === 'SUCCESS') ? 'success' : 'Ralat Google: ' . $response;
 }
 ?>
