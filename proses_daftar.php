@@ -5,15 +5,15 @@ session_start();
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Sanitasi input
-    $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan']);
-    $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima']);
-    $daripada = mysqli_real_escape_string($conn, $_POST['daripada']);
-    $perkara = mysqli_real_escape_string($conn, $_POST['perkara']);
-    $kolej = mysqli_real_escape_string($conn, $_POST['kolej']);
-    $target_role = mysqli_real_escape_string($conn, $_POST['target_role']);
+    // 1. Ambil input
+    $no_rujukan = $_POST['no_rujukan'];
+    $tarikh_terima = $_POST['tarikh_terima'];
+    $daripada = $_POST['daripada'];
+    $perkara = $_POST['perkara'];
+    $kolej = $_POST['kolej'];
+    $target_role = $_POST['target_role'];
     
-    // 2. Dapatkan Emel Penerima
+    // 2. Dapatkan Emel Penerima (Guna Prepared Statement)
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
     $stmt_email->bind_param("s", $target_role);
     $stmt_email->execute();
@@ -42,8 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
 
-        // Jika berjaya, simpan ID, jika gagal tandakan ralat
-        $drive_file_id = ($http_code_drive == 200) ? trim($drive_response) : "GAGAL_UPLOAD";
+        // Validasi: Pastikan respons hanyalah ID (biasanya panjangnya di bawah 100 aksara)
+        $drive_file_id = ($http_code_drive == 200 && strlen(trim($drive_response)) < 250) ? trim($drive_response) : "GAGAL_UPLOAD";
     } else {
         die("Fail tidak dijumpai atau ralat muat naik.");
     }
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo "Ralat Database: " . $stmt->error;
         }
     } else {
-        echo "E-mel gagal (Ralat HTTP: $http_code)";
+        echo "E-mel gagal (Ralat HTTP: $http_code). Respons: " . $response;
     }
 }
 ?>
