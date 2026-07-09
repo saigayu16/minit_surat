@@ -1,25 +1,32 @@
 <?php
-session_start();
-include('db.php');
-
+// proses_tandatangan.php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = intval($_POST['id']);
-    $catatan = mysqli_real_escape_string($conn, $_POST['catatan'] ?? '');
-    $arahan = mysqli_real_escape_string($conn, $_POST['arahan_pilihan'] ?? '');
-    $dataURL = $_POST['image'];
+    
+    // URL Web App Google anda (Pastikan ada /exec di hujung)
+    $webAppUrl = 'https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec'; 
 
-    // Tukar base64 imej kepada binary untuk LONGBLOB
-    $parts = explode(',', $dataURL);
-    $bin_ttd = base64_decode($parts[1]);
+    $payload = [
+        "image" => $_POST['image'], // Tandatangan (Base64)
+        "fileName" => "Tandatangan_ID_" . $_POST['id'] . ".png",
+        "catatan" => $_POST['catatan'],
+        "arahan" => $_POST['arahan_pilihan'],
+        "folderId" => '1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1'
+    ];
 
-    // Update database
-    $stmt = $conn->prepare("UPDATE minit_surat SET tandatangan_data=?, catatan=?, arahan_pilihan=?, status='SELESAI' WHERE id=?");
-    $stmt->bind_param("sssi", $bin_ttd, $catatan, $arahan, $id);
+    $ch = curl_init($webAppUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    
+    $response = curl_exec($ch);
+    curl_close($ch);
 
-    if ($stmt->execute()) {
-        echo "success";
+    // Hantar respons kembali kepada JavaScript anda
+    if (strpos($response, 'SUCCESS') !== false) {
+        echo 'success';
     } else {
-        echo "Ralat Database: " . $stmt->error;
+        echo 'Gagal menyimpan ke Drive: ' . $response;
     }
 }
 ?>
