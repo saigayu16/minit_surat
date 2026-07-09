@@ -1,36 +1,25 @@
 <?php
-// Minit_proses.php
-header('Content-Type: application/json');
+// Pastikan anda menerima data JSON
+$input = json_decode(file_get_contents('php://input'), true);
 
-$folder_id = "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1";
-$id_dokumen = $_POST['id'] ?? 'tiada_id';
-$base64_data = $_POST['fail_baharu_base64'] ?? '';
+// TAMPAL URL ANDA DI SINI (Contoh: https://script.google.com/...)
+$webAppUrl = 'https://script.google.com/macros/s/AKfycbwy4aQdfAN3M_72NdFQCFosvM9DAe74BIJaRSr4-0orntxrBV-0JdOqaF4qMg_aBUU_/exec'; 
 
-if (empty($base64_data)) {
-    echo json_encode(['status' => 'error', 'message' => 'Tiada data fail diterima']);
-    exit;
-}
+$payload = json_encode([
+    "image" => $input['image'], // Base64 dari canvas
+    "fileName" => $input['nama_fail'],
+    "folderId" => '1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1'
+]);
 
-// URL Skrip Google anda (Gantikan dengan URL sebenar)
-$web_url = "https://script.google.com/macros/s/AKfycbzC-iMS5JwBfSa-GgrVBWaoLo1jxr-PJ6VxIqUP1QMGfKe0b_8ur1QcMwQZAJcXD7Sm/exec";
-
-// Data yang dihantar ke Google
-$data = [
-    'folder_id' => $folder_id,
-    'nama_fail' => 'Minit_Disahkan_' . $id_dokumen . '.pdf',
-    'fail_base64' => $base64_data,
-    'id' => $id_dokumen
-];
-
-$ch = curl_init($web_url);
+$ch = curl_init($webAppUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 
-$respon = curl_exec($ch);
+$response = curl_exec($ch);
 curl_close($ch);
 
-echo $respon;
+echo $response; // Ini akan memberi maklum balas "SUCCESS" atau "ERROR" pada skrin anda
 ?>
