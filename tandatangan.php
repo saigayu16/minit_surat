@@ -43,6 +43,8 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; width: 48%; transition: opacity 0.2s; }
         textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; margin-bottom: 15px; }
         .sticky-note { background: #fef08a; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
     </style>
 </head>
 <body>
