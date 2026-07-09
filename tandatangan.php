@@ -44,7 +44,7 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
         .then(response => response.text())
         .then(data => {
             alert("Tandatangan berjaya disimpan!");
-            window.location.href = 'cetak_minit.php?id=<?= $id ?>';
+            window.location.href = 'homedirector.php?id=<?= $id ?>';
         });
     });
 </script>
