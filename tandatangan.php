@@ -122,12 +122,19 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
                 fd.append('catatan', dataToSend.catatan);
                 fd.append('arahan_pilihan', dataToSend.arahan);
 
-                fetch('proses_tandatangan.php', { method: 'POST', body: fd })
-                .then(response => response.text())
-                .then(result => {
+                fetch('proses_tandatangan.php', {
+                method: 'POST',
+                body: formData // Pastikan FormData anda mengandungi 'id'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result.trim() === 'success') {
                     alert("Berjaya disahkan!");
-                    window.location.href = 'homedirector.php';
-                });
+                    window.location.href = 'homedirector.php'; // Redirect ke dashboard
+                } else {
+                    alert("Ralat: " + result);
+                }
+            });
             })
             .catch(error => {
                 alert("Ralat: " + error);
