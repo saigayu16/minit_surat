@@ -8,12 +8,9 @@ $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
 
 if ($row && !empty($row['drive_file_id']) && $row['drive_file_id'] !== "GAGAL_UPLOAD") {
-    $fileId = trim($row['drive_file_id']);
-    // Papar terus melalui iframe Google Drive
-    header("Location: https://drive.google.com/file/d/$fileId/preview");
-    exit;
+    // Hanya "echo" URL, bukan redirect header
+    echo "https://drive.google.com/file/d/" . trim($row['drive_file_id']) . "/preview";
 } else {
-    echo "<h1>Fail tidak dijumpai dalam Drive.</h1>";
-    echo "<p>ID Fail dalam database: " . ($row['drive_file_id'] ?? 'Tiada') . "</p>";
+    echo "ERROR";
 }
 ?>
