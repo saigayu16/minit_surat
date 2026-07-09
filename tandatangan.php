@@ -84,18 +84,23 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         btnSave.innerText = "Memproses...";
         btnSave.disabled = true;
 
+        // ... di dalam script anda ...
         const formData = new FormData();
         formData.append('id', idSurat);
         formData.append('image', signaturePad.toDataURL('image/png'));
         formData.append('catatan', document.getElementById('catatan').value);
+        // Pastikan anda ada drive_file_id dalam database anda
+        formData.append('fileId', "<?= $surat['drive_file_id'] ?>"); 
         
         const selected = [];
         document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
         formData.append('arahan_pilihan', selected.join(', '));
-
+        
         fetch('proses_tandatangan.php', {
             method: 'POST',
             body: formData
+        })
+// ... selebihnya kod anda ...
         })
         .then(response => response.text())
         .then(data => {
