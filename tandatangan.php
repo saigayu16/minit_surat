@@ -118,7 +118,7 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             formData.append('image', signaturePad.toDataURL('image/png'));
             formData.append('catatan', document.getElementById('catatan').value);
             // Folder ID perlu dihantar untuk skrip tahu di mana nak cari fail
-            formData.append('folderId', '1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1');
+            formData.append('fileId', "<?= $surat['drive_file_id'] ?>");
                         
             const selected = [];
             document.querySelectorAll('input[name="arahan"]:checked').forEach((cb) => selected.push(cb.value));
