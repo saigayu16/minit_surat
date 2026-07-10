@@ -15,12 +15,12 @@ $total_perlu_sahkan = 0;
 $total_selesai = 0;
 $total_kepala_batas = 0;
 
-// Mengira yang belum DISAHKAN
-$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'DISAHKAN'");
+// Mengira yang belum SELESAI TANDATANGAN
+$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN'");
 if($count_wait) $total_perlu_sahkan = $count_wait->fetch_assoc()['total'];
 
-// Mengira yang sudah DISAHKAN
-$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'DISAHKAN'");
+// Mengira yang sudah SELESAI TANDATANGAN
+$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN'");
 if($count_done) $total_selesai = $count_done->fetch_assoc()['total'];
 
 $count_kkkb = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE kolej = 'Kolej Komuniti Kepala Batas'");
@@ -90,11 +90,10 @@ if($count_kkkb) $total_kepala_batas = $count_kkkb->fetch_assoc()['total'];
                 if ($res && $res->num_rows > 0) {
                     while($row = $res->fetch_assoc()) {
                         $status = trim($row['status'] ?? 'BARU');
-                        // Semak jika status adalah DISAHKAN
-                        $is_disahkan = (strcasecmp($status, 'DISAHKAN') == 0);
+                        // Semak jika status adalah SELESAI TANDATANGAN
+                        $is_selesai = (strcasecmp($status, 'SELESAI TANDATANGAN') == 0);
                         
-                        $badge = $is_disahkan ? 'done' : 'wait';
-                        $display_status = $is_disahkan ? 'DISAHKAN' : $status;
+                        $badge = $is_selesai ? 'done' : 'wait';
                         $catatan_pendek = !empty($row['catatan']) ? htmlspecialchars(substr($row['catatan'], 0, 30)) . '...' : '-';
 
                         echo "<tr>
@@ -102,12 +101,12 @@ if($count_kkkb) $total_kepala_batas = $count_kkkb->fetch_assoc()['total'];
                             <td>".htmlspecialchars($row['didaftarkan_oleh'])."</td>
                             <td>".htmlspecialchars($row['kolej'])."</td>
                             <td>".htmlspecialchars($row['perkara'])."</td>
-                            <td><span class='status-badge $badge'>$display_status</span></td>
+                            <td><span class='status-badge $badge'>$status</span></td>
                             <td style='font-style:italic; color:#64748b;'>$catatan_pendek</td>
                             <td>";
                         
-                        // Logik Butang: Jika DISAHKAN -> Lihat, Lain-lain -> Sahkan
-                        if ($is_disahkan) {
+                        // Logik Butang: Jika SELESAI TANDATANGAN -> Lihat, Lain-lain -> Sahkan
+                        if ($is_selesai) {
                             echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view">Lihat</a>';
                         } else {
                             echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign">Sahkan</a>';
