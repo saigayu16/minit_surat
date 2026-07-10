@@ -16,9 +16,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 2. Setup API Brevo
-    // GANTIKAN 'YOUR_BREVO_API_KEY_HERE' DENGAN KEY SEBENAR ANDA
+    // 2. Ambil API Key daripada Environment Variable (Render/Server)
     $apiKey = getenv('BREVO_API_KEY');
+    
+    // Semakan jika API Key tidak dijumpai di server
+    if (!$apiKey) {
+        echo "<script>alert('Ralat: Konfigurasi API Key tidak dijumpai di server.'); window.history.back();</script>";
+        exit;
+    }
     
     $config = SendinBlue\Client\Configuration::getDefaultConfiguration()
               ->setApiKey('api-key', $apiKey);
@@ -46,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "<script>alert('E-mel berjaya dihantar!'); window.location='homeadmin.php';</script>";
             
     } catch (Exception $e) {
-        // Jika API Key salah atau limit habis, ia akan keluar alert ini
+        // Paparkan mesej ralat daripada Brevo
         $errorResponse = json_decode($e->getResponseBody(), true);
         $message = isset($errorResponse['message']) ? $errorResponse['message'] : $e->getMessage();
         echo "<script>alert('E-mel gagal: " . addslashes($message) . "'); window.history.back();</script>";
