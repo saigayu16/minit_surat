@@ -30,7 +30,6 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; width: 48%; transition: opacity 0.2s; }
         textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; margin-bottom: 15px; resize: vertical; }
 
-        /* Sticky Note Box Style */
         .sticky-note-box { background: #f0f7ff; padding: 20px; border-radius: 8px; border-left: 5px solid #2563eb; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .arahan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
         .arahan-grid label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; color: #1e293b; padding: 8px; background: white; border-radius: 6px; border: 1px solid #e2e8f0; }
@@ -77,18 +76,13 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 
 <script>
     const canvas = document.getElementById('signature-pad');
-    // Set saiz canvas
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-    
     const signaturePad = new SignaturePad(canvas);
     const idSurat = "<?= $id ?>";
 
     document.getElementById('save').addEventListener('click', function() {
-        if (signaturePad.isEmpty()) { 
-            alert("Sila turunkan tandatangan terlebih dahulu!"); 
-            return; 
-        }
+        if (signaturePad.isEmpty()) { alert("Sila turunkan tandatangan terlebih dahulu!"); return; }
         
         const btnSave = document.getElementById('save');
         btnSave.innerText = "Memproses...";
@@ -109,22 +103,15 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         })
         .then(response => response.text())
         .then(data => {
-            if (data.trim() === 'error') {
-                alert("Gagal menyimpan tandatangan ke database.");
+            if (data.trim() === 'success') {
+                window.location.href = 'homedirector.php';
+            } else {
+                alert("Gagal menyimpan: " + data);
                 btnSave.innerText = "Minit & Sahkan ke Drive";
                 btnSave.disabled = false;
-            } else {
-                // Redirect ke URL yang dihantar oleh proses_tandatangan.php
-                window.location.href = data.trim(); 
             }
-        })
-        .catch(error => {
-            alert("Ralat sistem, sila cuba lagi.");
-            btnSave.innerText = "Minit & Sahkan ke Drive";
-            btnSave.disabled = false;
         });
     });
 </script>
-
 </body>
 </html>
