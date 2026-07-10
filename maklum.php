@@ -1,13 +1,11 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-// SEMAKAN PENTING: Pastikan folder vendor wujud sebelum panggil library
-$vendorPath = __DIR__ . '/vendor/autoload.php';
-if (!file_exists($vendorPath)) {
-    die("<h1>Ralat Sistem:</h1><p>Library tidak dijumpai. Sila pastikan anda telah menjalankan 'composer install' di Render.</p>");
-}
-require_once $vendorPath;
+// Panggil fail PHPMailer secara manual
+require 'PHPMailer/Exception.php';
+require 'PHPMailer/PHPMailer.php';
+require 'PHPMailer/SMTP.php';
 
 include('db.php');
 session_start();
@@ -18,50 +16,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $surat_id = intval($_POST['surat_id']);
     $nama_staf = mysqli_real_escape_string($conn, $_POST['nama_staf']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
-    
-    // 1. SEMAKAN: Adakah staf wujud dalam database
-    $stmt_check = $conn->prepare("SELECT email FROM staff WHERE email = ? AND nama = ?");
-    $stmt_check->bind_param("ss", $email, $nama_staf);
-    $stmt_check->execute();
-    if ($stmt_check->get_result()->num_rows === 0) {
-        echo "<script>alert('Ralat: Maklumat staf tidak sah!'); window.history.back();</script>";
-        exit;
-    }
 
-    // 2. Proses Upload Fail (Simpan dalam folder sementara)
-    $attachmentPath = '';
-    if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
-        $tempDir = sys_get_temp_dir() . '/';
-        $file_name = time() . "_" . basename($_FILES["dokumen_minit"]["name"]);
-        $attachmentPath = $tempDir . $file_name;
-        move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $attachmentPath);
-    }
-
-    // 3. Setup API Brevo
-    $apiKey = getenv('BREVO_API_KEY');
-    if (!$apiKey) { die("Ralat: BREVO_API_KEY tidak disetkan di Render."); }
-    
-    $config = SendinBlue\Client\Configuration::getDefaultConfiguration()->setApiKey('api-key', $apiKey);
-    $apiInstance = new SendinBlue\Client\Api\TransactionalEmailsApi(new GuzzleHttp\Client(), $config);
-
+    $mail = new PHPMailer(true);
     try {
-        $emailData = [
-            'subject' => 'Notifikasi Minit Surat Baru',
-            'sender' => ['name' => 'Sistem Minit Digital', 'email' => 'saigayu1605@gmail.com'],
-            'to' => [['email' => $email, 'name' => $nama_staf]],
-            'htmlContent' => "<html><body>Tuan/Puan <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru. Sila semak sistem.<br><br>Terima kasih.</body></html>"
-        ];
+        // SETTING SMTP (Gunakan akaun Gmail anda)
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'saigayu1605@gmail.com'; // Ganti dengan e-mel anda
+        $mail->Password   = 'sspxgfwadkfghbfs';   // App Password Gmail (16 digit)
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-        if ($attachmentPath && file_exists($attachmentPath)) {
-            $emailData['attachment'] = [[
-                'name' => basename($attachmentPath),
-                'content' => base64_encode(file_get_contents($attachmentPath))
-            ]];
-        }
+        $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Surat');
+        $mail->addAddress($email, $nama_staf);
+        $mail->isHTML(true);
+        $mail->Subject = 'Notifikasi Minit Surat Baru';
+        $mail->Body    = "Tuan/Puan <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru. Sila semak sistem.";
 
-        $apiInstance->sendTransacEmail(new \SendinBlue\Client\Model\SendSmtpEmail($emailData));
+        $mail->send();
 
-        // 4. Update Database
+        // Update Database
         $stmt = $conn->prepare("UPDATE minit_surat SET staf_dimaklumkan = ?, status = 'DIMAKLUM' WHERE id = ?");
         $stmt->bind_param("si", $nama_staf, $surat_id);
         $stmt->execute();
@@ -69,8 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "<script>alert('Berjaya! E-mel telah dihantar.'); window.location='homeadmin.php?success=1';</script>";
         exit();
     } catch (Exception $e) {
-        echo "<h1>Ralat API Brevo:</h1><pre>" . $e->getMessage() . "</pre>";
-        exit();
+        echo "<script>alert('Ralat E-mel: {$mail->ErrorInfo}'); window.history.back();</script>";
     }
 }
 ?>
