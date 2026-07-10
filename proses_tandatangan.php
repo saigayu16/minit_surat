@@ -7,9 +7,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $arahan = $_POST['arahan_pilihan'];
     $image = $_POST['image'];
 
-    // Update ke database, status tukar kepada 'DISAHKAN'
+    // Saya telah tukar status kepada 'SELESAI TANDATANGAN' di bawah:
     $stmt = $conn->prepare("UPDATE minit_surat SET 
-                            status = 'DISAHKAN', 
+                            status = 'SELESAI TANDATANGAN', 
                             catatan = ?, 
                             arahan_pilihan = ?, 
                             tandatangan = ? 
