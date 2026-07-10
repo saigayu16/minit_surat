@@ -191,7 +191,7 @@ if($count_done) $total_done = $count_done->fetch_assoc()['total'];
                                             <i class='fa-solid fa-user-check'></i> " . htmlspecialchars($row['staf_dimaklumkan']) . "
                                           </span>";
                                 } else {
-                                    echo "<a href='maklum.php?id={$row['id']}' class='action-link' style='color:#7c3aed;'>
+                                    echo "<a href='proses_maklum.php?id={$row['id']}' class='action-link' style='color:#7c3aed;'>
                                             <i class='fa-solid fa-paper-plane'></i> Maklum
                                           </a>";
                                 }
