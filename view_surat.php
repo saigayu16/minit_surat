@@ -33,8 +33,10 @@ if (!empty($row['fail_surat']) && file_exists($fail_tempatan)) {
         body { background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('background.jpg'); background-size: cover; background-position: center; font-family: 'Segoe UI', sans-serif; }
         .wrapper { max-width: 1200px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; }
         .card { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        .info-row { display: flex; margin-bottom: 10px; }
         .info-label { width: 150px; font-weight: bold; color: #4a5568; }
         .btn-nav { padding: 8px 15px; background: #4a5568; color: white; text-decoration: none; border-radius: 5px; }
+        .sig-box { margin-top: 20px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
     </style>
 </head>
 <body>
@@ -57,9 +59,20 @@ if (!empty($row['fail_surat']) && file_exists($fail_tempatan)) {
         <div class="info-row"><div class="info-label">Rujukan:</div> <div><?= htmlspecialchars($row['no_rujukan']) ?></div></div>
         <div class="info-row"><div class="info-label">Kolej:</div> <div><?= htmlspecialchars($row['kolej'] ?? '-') ?></div></div>
         <hr>
-        <p><strong>Catatan:</strong> <?= nl2br(htmlspecialchars($row['catatan'] ?? 'Tiada')) ?></p>
         
-        <!-- Navigasi Kronologi -->
+        <p><strong>Catatan:</strong><br> <?= nl2br(htmlspecialchars($row['catatan'] ?? 'Tiada')) ?></p>
+        
+        <?php if (!empty($row['arahan_pilihan'])): ?>
+            <p><strong>Arahan:</strong><br> <span style="color: #2563eb; font-weight:bold;"><?= htmlspecialchars($row['arahan_pilihan']) ?></span></p>
+        <?php endif; ?>
+
+        <?php if (!empty($row['tandatangan'])): ?>
+            <div class="sig-box">
+                <small>Tandatangan Pengarah:</small><br>
+                <img src="<?= $row['tandatangan'] ?>" alt="Tandatangan" style="width: 200px; height: auto; margin-top: 5px;">
+            </div>
+        <?php endif; ?>
+        
         <div style="margin-top: 20px; display: flex; justify-content: space-between;">
             <?php
             $prev = $conn->query("SELECT id FROM minit_surat WHERE id < $id ORDER BY id DESC LIMIT 1")->fetch_assoc();
