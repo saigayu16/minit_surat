@@ -17,12 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // 2. Setup API Brevo
+    // GANTIKAN 'YOUR_BREVO_API_KEY_HERE' DENGAN KEY SEBENAR ANDA
+    $apiKey = 'YOUR_BREVO_API_KEY_HERE'; 
+    
     $config = SendinBlue\Client\Configuration::getDefaultConfiguration()
-              ->setApiKey('api-key', getenv('BREVO_API_KEY'));
+              ->setApiKey('api-key', $apiKey);
+    
     $apiInstance = new SendinBlue\Client\Api\TransactionalEmailsApi(new GuzzleHttp\Client(), $config);
 
     try {
-        // PENTING: Gunakan e-mel yang sah dalam akaun Brevo anda di bahagian 'email' pengirim
         $sendSmtpEmail = new \SendinBlue\Client\Model\SendSmtpEmail([
             'subject' => 'Notifikasi Minit Surat',
             'sender' => [
@@ -30,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'email' => 'saigayu1605@gmail.com' 
             ],
             'to' => [['email' => $email_staf, 'name' => $nama_staf]],
-            'htmlContent' => "<html><body>Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila log masuk ke sistem.</body></html>"
+            'htmlContent' => "<html><body>Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila log masuk ke sistem untuk tindakan lanjut.</body></html>"
         ]);
 
         $apiInstance->sendTransacEmail($sendSmtpEmail);
@@ -43,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "<script>alert('E-mel berjaya dihantar!'); window.location='homeadmin.php';</script>";
             
     } catch (Exception $e) {
-        // Paparkan ralat penuh untuk debugging
+        // Jika API Key salah atau limit habis, ia akan keluar alert ini
         $errorResponse = json_decode($e->getResponseBody(), true);
         $message = isset($errorResponse['message']) ? $errorResponse['message'] : $e->getMessage();
         echo "<script>alert('E-mel gagal: " . addslashes($message) . "'); window.history.back();</script>";
