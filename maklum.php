@@ -2,7 +2,7 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Panggil fail PHPMailer secara manual
+// 1. Panggil fail PHPMailer
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
@@ -19,24 +19,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $mail = new PHPMailer(true);
     try {
-        // SETTING SMTP (Gunakan akaun Gmail anda)
+        // TETAPAN SMTP GMAIL
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'saigayu1605@gmail.com'; // Ganti dengan e-mel anda
-        $mail->Password   = 'sspxgfwadkfghbfs';   // App Password Gmail (16 digit)
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Username   = 'saigayu1605@gmail.com'; 
+        $mail->Password   = 'sspxgfwadkfghbfs'; // MASUKKAN 16-DIGIT APP PASSWORD ANDA DI SINI
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
 
-        $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Surat');
+        $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Digital');
         $mail->addAddress($email, $nama_staf);
         $mail->isHTML(true);
         $mail->Subject = 'Notifikasi Minit Surat Baru';
-        $mail->Body    = "Tuan/Puan <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru. Sila semak sistem.";
+        $mail->Body    = "Tuan/Puan <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru. Sila semak sistem.<br><br>Terima kasih.";
 
         $mail->send();
 
-        // Update Database
+        // UPDATE DATABASE
         $stmt = $conn->prepare("UPDATE minit_surat SET staf_dimaklumkan = ?, status = 'DIMAKLUM' WHERE id = ?");
         $stmt->bind_param("si", $nama_staf, $surat_id);
         $stmt->execute();
@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     } catch (Exception $e) {
         echo "<script>alert('Ralat E-mel: {$mail->ErrorInfo}'); window.history.back();</script>";
+        exit();
     }
 }
 ?>
@@ -58,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Quicksand', sans-serif; background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('daftarsurat.jpg'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        body { font-family: 'Quicksand', sans-serif; background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('daftarsurat.jpg'); background-size: cover; background-position: center; background-attachment: fixed; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .box { background: #fff9c4; padding: 40px; border-radius: 2px 20px 2px 20px; width: 100%; max-width: 400px; box-shadow: 15px 15px 30px rgba(0,0,0,0.15); position: relative; transform: rotate(-2deg); transition: 0.3s; }
         .box:hover { transform: rotate(0deg) scale(1.02); }
         h3 { margin: 0 0 20px 0; color: #5d4037; text-align: center; font-weight: 700; }
@@ -74,11 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="box">
         <div class="pin"></div>
         <h3><i class="fa-solid fa-note-sticky"></i> Nota Makluman</h3>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST">
             <input type="hidden" name="surat_id" value="<?= htmlspecialchars($id) ?>">
             <div class="form-group">
                 <label>Pilih Staf:</label>
-                <select name="nama_staf" id="staf_select" required onchange="updateEmail(this)">
+                <select name="nama_staf" id="staf_select" required onchange="document.getElementById('email_input').value=this.options[this.selectedIndex].getAttribute('data-email')">
                     <option value="">-- Pilih Nama Staf --</option>
                     <?php
                     $result = $conn->query("SELECT nama, email FROM staff");
@@ -92,19 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label>E-mel Staf:</label>
                 <input type="email" name="email" id="email_input" readonly required>
             </div>
-            <div class="form-group">
-                <label>Muat Naik Minit (Pilihan):</label>
-                <input type="file" name="dokumen_minit" accept=".pdf,.jpg,.png">
-            </div>
             <button type="submit">Hantar Sekarang!</button>
         </form>
     </div>
-    <script>
-    function updateEmail(selectElement) {
-        var selectedOption = selectElement.options[selectElement.selectedIndex];
-        var email = selectedOption.getAttribute('data-email');
-        document.getElementById('email_input').value = email;
-    }
-    </script>
 </body>
 </html>
