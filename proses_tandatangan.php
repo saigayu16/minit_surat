@@ -7,25 +7,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id']);
     $catatan = isset($_POST['catatan']) ? $_POST['catatan'] : '';
     $arahan = isset($_POST['arahan_pilihan']) ? $_POST['arahan_pilihan'] : '';
+    $image_data = isset($_POST['image']) ? $_POST['image'] : ''; // Data Base64 tandatangan
     
-    // 2. Update database (Pastikan nama kolum sama dengan database anda)
-    // Saya telah tambah tandatangan_fail jika anda ingin simpan nama fail di sini juga
-    $stmt = $conn->prepare("UPDATE minit_surat SET status = 'SELESAI', catatan = ?, arahan_pilihan = ?, tarikh_sah = NOW() WHERE id = ?");
+    // 2. Update database
+    // Pastikan column 'tandatangan' wujud di dalam table 'minit_surat' anda (jenis LONGTEXT)
+    $stmt = $conn->prepare("UPDATE minit_surat SET 
+                            status = 'SELESAI', 
+                            catatan = ?, 
+                            arahan_pilihan = ?, 
+                            tandatangan = ?, 
+                            tarikh_sah = NOW() 
+                            WHERE id = ?");
     
     if (!$stmt) {
         die("Ralat SQL: " . $conn->error);
     }
     
-    $stmt->bind_param("ssi", $catatan, $arahan, $id);
+    $stmt->bind_param("sssi", $catatan, $arahan, $image_data, $id);
     
     if ($stmt->execute()) {
-        // 3. Integrasi Google Apps Script (Jika perlu)
-        // Pastikan URL Google Apps Script anda adalah betul
+        // 3. Integrasi Google Apps Script
+        // Kita hantar data ke Google Apps Script (termasuk tandatangan jika Apps Script anda perlukannya)
         $webAppUrl = 'https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec'; 
         
         $data = [
             'id' => $id,
             'folderId' => "1jXktGUFE2kZ32_LSk9DuybBsdXel6dL1"
+            // Jika Apps Script anda perlu data tandatangan, anda boleh tambah: 'image' => $image_data
         ];
 
         $ch = curl_init($webAppUrl);
@@ -37,10 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $response = curl_exec($ch);
         curl_close($ch);
 
-        // Beri maklum balas kepada AJAX
-        echo "success";
+        // 4. Beri maklum balas kepada AJAX
+        // Kita pulangkan URL untuk redirect
+        echo "homedirector.php?id=" . $id; 
     } else {
-        echo "Gagal: " . $stmt->error;
+        echo "error";
     }
 }
 ?>
