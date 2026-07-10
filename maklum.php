@@ -15,6 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->bind_param("si", $nama_staf, $surat_id);
     
     if ($stmt->execute()) {
+        // Hantar E-mel kepada staf
+        $subject = "Notifikasi Minit Surat Baru";
+        $message = "Tuan/Puan, anda telah dimaklumkan mengenai surat baru dalam Sistem Minit Digital. Sila semak sistem.";
+        $headers = "From: sistem@minitdigital.com"; // Tukar kepada e-mel sistem anda
+        
+        mail($email, $subject, $message, $headers);
+        
         // Berjaya: Redirect ke dashboard
         header("Location: homeadmin.php?success=1");
         exit();
@@ -47,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         h3 { margin: 0 0 20px 0; color: #5d4037; text-align: center; font-weight: 700; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; color: #795548; font-size: 0.9rem; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 2px dashed #fbc02d; border-radius: 5px; background: rgba(255,255,255,0.4); box-sizing: border-box; font-family: inherit; }
+        input, select { width: 100%; padding: 12px; border: 2px dashed #fbc02d; border-radius: 5px; background: rgba(255,255,255,0.4); box-sizing: border-box; font-family: inherit; }
         button { width: 100%; padding: 12px; background: #f57c00; color: white; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         button:hover { background: #e65100; transform: scale(1.03); }
         .pin { width: 25px; height: 25px; background: radial-gradient(circle at 30% 30%, #ef5350, #b71c1c); border-radius: 50%; position: absolute; top: -10px; left: 50%; margin-left: -12.5px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
@@ -63,13 +70,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="hidden" name="surat_id" value="<?= htmlspecialchars($id) ?>">
             
             <div class="form-group">
-                <label>Nama Staf:</label>
-                <input type="text" name="nama_staf" required>
+                <label>Pilih Staf:</label>
+                <select name="nama_staf" id="staf_select" required onchange="updateEmail(this)">
+                    <option value="">-- Pilih Nama Staf --</option>
+                    <?php
+                    $result = $conn->query("SELECT nama, email FROM staff");
+                    while($row = $result->fetch_assoc()) {
+                        echo "<option value='{$row['nama']}' data-email='{$row['email']}'>{$row['nama']}</option>";
+                    }
+                    ?>
+                </select>
             </div>
             
             <div class="form-group">
                 <label>E-mel Staf:</label>
-                <input type="email" name="email" required>
+                <input type="email" name="email" id="email_input" readonly required>
             </div>
             
             <div class="form-group">
@@ -81,5 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
     </div>
 
+    <script>
+    function updateEmail(selectElement) {
+        var selectedOption = selectElement.options[selectElement.selectedIndex];
+        var email = selectedOption.getAttribute('data-email');
+        document.getElementById('email_input').value = email;
+    }
+    </script>
 </body>
 </html>
