@@ -2,33 +2,39 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Load libraries via Composer
+// Load library Brevo melalui Composer
 require_once __DIR__ . '/vendor/autoload.php';
 include('db.php');
 session_start();
 
 $id = $_GET['id'] ?? '';
 
+// Proses bila borang dihantar
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $surat_id = intval($_POST['surat_id']);
-    $nama = mysqli_real_escape_string($conn, $_POST['nama_staf']);
+    $nama_staf = mysqli_real_escape_string($conn, $_POST['nama_staf']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     
-    // Handle File Upload with safer path
+    // 1. SEMAKAN: Adakah staf wujud dalam database?
+    $stmt_check = $conn->prepare("SELECT email FROM staff WHERE email = ? AND nama = ?");
+    $stmt_check->bind_param("ss", $email, $nama_staf);
+    $stmt_check->execute();
+    if ($stmt_check->get_result()->num_rows === 0) {
+        echo "<script>alert('Ralat: Maklumat staf tidak sah! Sila pastikan nama dan e-mel sepadan dengan rekod.'); window.history.back();</script>";
+        exit;
+    }
+
+    // 2. Proses Upload Fail (Minit)
     $attachmentPath = '';
     if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
         $uploadDir = __DIR__ . '/uploads/';
         if (!file_exists($uploadDir)) { mkdir($uploadDir, 0755, true); }
-        
         $file_name = time() . "_" . basename($_FILES["dokumen_minit"]["name"]);
         $attachmentPath = $uploadDir . $file_name;
-        
-        if (!move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $attachmentPath)) {
-            die("Ralat: Gagal menyimpan fail. Sila semak kebenaran folder 'uploads'.");
-        }
+        move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $attachmentPath);
     }
 
-    // Setup Brevo API
+    // 3. Setup API Brevo
     $apiKey = getenv('BREVO_API_KEY');
     if (!$apiKey) { die("Ralat: BREVO_API_KEY tidak disetkan di Render."); }
     
@@ -39,10 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $emailData = [
             'subject' => 'Notifikasi Minit Surat Baru',
             'sender' => ['name' => 'Sistem Minit Digital', 'email' => 'saigayu1605@gmail.com'],
-            'to' => [['email' => $email, 'name' => $nama]],
-            'htmlContent' => "<html><body>Tuan/Puan <strong>$nama</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru dalam Sistem Minit Digital.<br><br>Terima kasih.</body></html>"
+            'to' => [['email' => $email, 'name' => $nama_staf]],
+            'htmlContent' => "<html><body>Tuan/Puan <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru dalam Sistem Minit Digital. Sila semak sistem.<br><br>Terima kasih.</body></html>"
         ];
 
+        // Lampirkan fail jika ada
         if ($attachmentPath && file_exists($attachmentPath)) {
             $emailData['attachment'] = [[
                 'name' => basename($attachmentPath),
@@ -51,10 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         $apiInstance->sendTransacEmail(new \SendinBlue\Client\Model\SendSmtpEmail($emailData));
-        
-        // Update Database
+
+        // 4. Update Database
         $stmt = $conn->prepare("UPDATE minit_surat SET staf_dimaklumkan = ?, status = 'DIMAKLUM' WHERE id = ?");
-        $stmt->bind_param("si", $nama, $surat_id);
+        $stmt->bind_param("si", $nama_staf, $surat_id);
         $stmt->execute();
         
         echo "<script>alert('Berjaya! E-mel telah dihantar.'); window.location='homeadmin.php?success=1';</script>";
