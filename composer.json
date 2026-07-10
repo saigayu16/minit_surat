@@ -3,27 +3,13 @@
     "type": "library",
     "description": "PHPMailer is a full-featured email creation and transfer class for PHP",
     "authors": [
-        {
-            "name": "Marcus Bointon",
-            "email": "phpmailer@synchromedia.co.uk"
-        },
-        {
-            "name": "Jim Jagielski",
-            "email": "jimjag@gmail.com"
-        },
-        {
-            "name": "Andy Prevost",
-            "email": "codeworxtech@users.sourceforge.net"
-        },
-        {
-            "name": "Brent R. Matzelle"
-        }
+        { "name": "Marcus Bointon", "email": "phpmailer@synchromedia.co.uk" },
+        { "name": "Jim Jagielski", "email": "jimjag@gmail.com" },
+        { "name": "Andy Prevost", "email": "codeworxtech@users.sourceforge.net" },
+        { "name": "Brent R. Matzelle" }
     ],
     "funding": [
-        {
-            "url": "https://github.com/Synchro",
-            "type": "github"
-        }
+        { "url": "https://github.com/Synchro", "type": "github" }
     ],
     "config": {
         "allow-plugins": {
@@ -36,7 +22,9 @@
         "ext-ctype": "*",
         "ext-filter": "*",
         "ext-hash": "*",
-        "google/apiclient": "^2.19"
+        "google/apiclient": "^2.19",
+        "sendinblue/api-v3-sdk": "^3.0",
+        "guzzlehttp/guzzle": "^7.0"
     },
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
