@@ -41,7 +41,15 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
 <div class="container">
     <div class="panel">
         <h3><i class="fa-solid fa-file-pdf"></i> Dokumen Rujukan</h3>
-        <iframe src="uploads/<?= htmlspecialchars($surat['fail_surat']) ?>" width="100%" height="600px" style="border:none;"></iframe>
+        <?php 
+        // Logik Paparan Google Drive
+        if (!empty($surat['drive_file_id']) && $surat['drive_file_id'] !== 'GAGAL_UPLOAD') {
+            echo '<iframe src="https://drive.google.com/file/d/' . htmlspecialchars($surat['drive_file_id']) . '/preview" width="100%" height="600px" style="border:none;"></iframe>';
+        } else {
+            // Fallback kepada cara asal jika drive_id tiada
+            echo '<iframe src="uploads/' . htmlspecialchars($surat['fail_surat']) . '" width="100%" height="600px" style="border:none;"></iframe>';
+        }
+        ?>
     </div>
 
     <div class="panel">
