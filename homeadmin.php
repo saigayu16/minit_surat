@@ -14,14 +14,16 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true)
 // 2. AMBIL NAMA USER
 $user_name = $_SESSION['user_name'] ?? 'Admin Sistem';
 
-// 3. KIRA STATISTIK
+// 3. KIRA STATISTIK (DITAMBAH: status 'DIMAKLUM' kini dikira sebagai selesai)
 $count_all = $conn->query("SELECT COUNT(*) as total FROM minit_surat");
 $total_surat = ($count_all) ? $count_all->fetch_assoc()['total'] : 0;
 
-$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN'");
+// Query untuk 'Menunggu': status selain 'SELESAI TANDATANGAN' dan 'DIMAKLUM'
+$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
 $total_wait = ($count_wait) ? $count_wait->fetch_assoc()['total'] : 0;
 
-$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN'");
+// Query untuk 'Selesai': status 'SELESAI TANDATANGAN' atau 'DIMAKLUM'
+$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
 $total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
 ?>
 
@@ -99,7 +101,8 @@ $total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
                 $res = $conn->query("SELECT * FROM minit_surat ORDER BY id DESC");
                 while($row = $res->fetch_assoc()) {
                     $status = trim($row['status'] ?? 'Menunggu');
-                    $badge = ($status == 'SELESAI TANDATANGAN') ? 'selesai-badge' : (($status == 'DISAHKAN') ? 'done' : 'wait');
+                    // Logik badge warna
+                    $badge = ($status == 'SELESAI TANDATANGAN' || $status == 'DIMAKLUM') ? 'selesai-badge' : 'wait';
                     
                     echo "<tr>
                         <td>".date('d/m/Y', strtotime($row['tarikh_terima']))."</td>
