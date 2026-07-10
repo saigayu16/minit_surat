@@ -22,7 +22,16 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 20px; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            padding: 20px;
+            /* Bahagian yang ditambah */
+            background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('homedirector.jpg'); 
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center center;
+        }
         .container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .sticky-note { background: #fef08a; padding: 15px; border-radius: 4px; box-shadow: 3px 3px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
