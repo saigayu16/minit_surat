@@ -2,6 +2,7 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Pastikan path ke fail PHPMailer betul
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
@@ -9,35 +10,29 @@ require 'PHPMailer/src/SMTP.php';
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // 1. Ambil data dari form
     $id = $_POST['surat_id'];
     $email = $_POST['email'];
     $nama_staf = $_POST['nama_staf'];
 
-    // 1. Semakan Staf
+    // 2. Semakan staf dalam database
     $stmt_check = $conn->prepare("SELECT nama FROM staff WHERE email = ? AND nama = ?");
     $stmt_check->bind_param("ss", $email, $nama_staf);
     $stmt_check->execute();
-    if ($stmt_check->get_result()->num_rows === 0) {
-        die("<script>alert('Ralat: Maklumat staf tidak sah!'); window.history.back();</script>");
+    $result = $stmt_check->get_result();
+
+    if ($result->num_rows === 0) {
+        echo "<script>alert('Ralat: Maklumat staf tidak sah!'); window.history.back();</script>";
+        exit;
     }
 
-    // 2. Proses Upload Fail
+    // 3. Validasi Fail (Tanpa perlu simpan ke folder server)
     if (!isset($_FILES['dokumen_minit']) || $_FILES['dokumen_minit']['error'] !== UPLOAD_ERR_OK) {
-        $error_code = $_FILES['dokumen_minit']['error'] ?? 'Tiada fail';
-        die("<script>alert('Gagal muat naik. Kod Ralat: $error_code'); window.history.back();</script>");
+        echo "<script>alert('Sila pilih fail untuk dimuat naik.'); window.history.back();</script>";
+        exit;
     }
 
-    $upload_dir = 'uploads/';
-    if (!is_dir($upload_dir)) { mkdir($upload_dir, 0755, true); }
-    
-    $file_name = time() . "_" . basename($_FILES["dokumen_minit"]["name"]);
-    $target_file = $upload_dir . $file_name;
-    
-    if (!move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $target_file)) {
-        die("<script>alert('Gagal memindahkan fail ke folder.'); window.history.back();</script>");
-    }
-
-    // 3. Setup & Hantar E-mel (PHPMailer)
+    // 4. Setup & Hantar E-mel (PHPMailer)
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
@@ -50,23 +45,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Digital');
         $mail->addAddress($email);
-        $mail->addAttachment($target_file);
+
+        // LAMPIRKAN FAIL TERUS DARI BUFFER SEMENTARA
+        $mail->addAttachment($_FILES['dokumen_minit']['tmp_name'], $_FILES['dokumen_minit']['name']);
 
         $mail->isHTML(true);
         $mail->Subject = 'Notifikasi Minit Surat';
-        $mail->Body = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.<br><br>Terima kasih.";
+        $mail->Body    = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.<br><br>Terima kasih.";
 
         $mail->send();
 
-        // 4. Update Database
+        // 5. Kemaskini Database
         $stmt = $conn->prepare("UPDATE minit_surat SET status = 'DIMAKLUM', maklum_kepada = ? WHERE id = ?");
         $stmt->bind_param("ss", $nama_staf, $id);
         $stmt->execute();
 
-        echo "<script>alert('Berjaya!'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('E-mel berjaya dihantar!'); window.location='homeadmin.php';</script>";
               
     } catch (Exception $e) {
-        echo "<script>alert('E-mel gagal dihantar: " . addslashes($mail->ErrorInfo) . "'); window.history.back();</script>";
+        echo "<script>alert('E-mel gagal dihantar. Ralat: " . addslashes($mail->ErrorInfo) . "'); window.history.back();</script>";
     }
 }
 ?>
