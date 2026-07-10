@@ -1,60 +1,84 @@
 <?php
-// Letakkan ini paling atas untuk paksa sistem tunjukkan semua ralat jika ada masalah
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-// Load libraries via Composer
-require_once __DIR__ . '/vendor/autoload.php';
+// Pastikan path ke fail PHPMailer adalah betul mengikut folder projek anda
+require 'PHPMailer/src/Exception.php';
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
+
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil data dari form (Pastikan input name="nama" ada dalam HTML anda)
+    // 1. Ambil data dari form
     $id = $_POST['surat_id'];
-    $email_staf = $_POST['email'];
-    $nama = $_POST['nama']; 
+    $email = $_POST['email'];
+    $nama_staf = $_POST['nama_staf'];
 
-    // 2. Semakan Staf (CHECKPOINT 1)
-    $stmt_check = $conn->prepare("SELECT email FROM staff WHERE email = ? AND nama = ?");
-    $stmt_check->bind_param("ss", $email_staf, $nama);
+    // 2. Semakan: Adakah staf wujud dalam database?
+    $stmt_check = $conn->prepare("SELECT nama FROM staff WHERE email = ? AND nama = ?");
+    $stmt_check->bind_param("ss", $email, $nama_staf);
     $stmt_check->execute();
-    if ($stmt_check->get_result()->num_rows === 0) {
-        die("Ralat: Staf tidak dijumpai dalam rekod.");
+    $result = $stmt_check->get_result();
+
+    if ($result->num_rows === 0) {
+        echo "<script>
+                alert('Ralat: Maklumat staf tidak sah! Sila pastikan nama dan e-mel sepadan dengan rekod.'); 
+                window.history.back();
+              </script>";
+        exit;
     }
 
-    // 3. Setup Brevo API (CHECKPOINT 2)
-    $apiKey = getenv('BREVO_API_KEY');
-    if (!$apiKey) {
-        die("Ralat: BREVO_API_KEY tidak disetkan di Render Environment Variables.");
-    }
+    // 3. Proses Upload Fail
+    if (!file_exists('uploads')) { mkdir('uploads', 0777, true); }
     
-    $config = SendinBlue\Client\Configuration::getDefaultConfiguration()->setApiKey('api-key', $apiKey);
-    $apiInstance = new SendinBlue\Client\Api\TransactionalEmailsApi(new GuzzleHttp\Client(), $config);
+    $file_name = time() . "_" . basename($_FILES["dokumen_minit"]["name"]);
+    $target_file = "uploads/" . $file_name;
+    
+    if (!move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $target_file)) {
+        echo "<script>alert('Gagal memuat naik fail.'); window.history.back();</script>";
+        exit;
+    }
 
+    // 4. Setup & Hantar E-mel (SMTP)
+    $mail = new PHPMailer(true);
     try {
-        // 4. Hantar Emel via Brevo
-        $sendSmtpEmail = new \SendinBlue\Client\Model\SendSmtpEmail([
-            'subject' => 'Notifikasi Minit Surat',
-            'sender' => ['name' => 'Sistem Minit Digital', 'email' => 'saigayu1605@gmail.com'],
-            'to' => [['email' => $email_staf, 'name' => $nama]],
-            'htmlContent' => "<html><body>Hai <strong>$nama</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk sistem untuk dokumen minit.<br><br>Terima kasih.</body></html>"
-        ]);
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'saigayu1605@gmail.com'; 
+        $mail->Password = 'sspxgfwadkfghbfs'; // App Password anda
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
 
-        $apiInstance->sendTransacEmail($sendSmtpEmail);
+        $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Digital');
+        $mail->addAddress($email);
+        $mail->addAttachment($target_file);
 
-        // 5. Update Database (CHECKPOINT 3)
+        $mail->isHTML(true);
+        $mail->Subject = 'Notifikasi Minit Surat';
+        $mail->Body    = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.<br><br>Terima kasih.";
+
+        $mail->send();
+
+        // 5. Kemaskini Database
+        // Mengemaskini status dan menyimpan nama staf dalam kolum maklum_kepada
         $stmt = $conn->prepare("UPDATE minit_surat SET status = 'DIMAKLUM', maklum_kepada = ? WHERE id = ?");
-        $stmt->bind_param("si", $nama, $id);
+        $stmt->bind_param("ss", $nama_staf, $id);
         $stmt->execute();
 
-        // 6. Selesai
-        echo "<script>alert('Berjaya! E-mel dihantar dan status surat dikemaskini.'); window.location='homeadmin.php';</script>";
-        exit;
-           
+        // 6. Redirect ke halaman admin
+        echo "<script>
+                alert('E-mel berjaya dihantar dan status surat dikemaskini kepada DIMAKLUM!'); 
+                window.location='homeadmin.php';
+              </script>";
+              
     } catch (Exception $e) {
-        // Paparkan ralat jika API gagal
-        echo "<h1>Ralat API Brevo:</h1><pre>" . $e->getMessage() . "</pre>";
-        echo "<br><a href='javascript:history.back()'>Kembali</a>";
-        exit;
+        // Paparkan ralat jika e-mel gagal dihantar
+        echo "<script>
+                alert('E-mel gagal dihantar. Ralat: " . addslashes($mail->ErrorInfo) . "'); 
+                window.history.back();
+              </script>";
     }
 }
 ?>
