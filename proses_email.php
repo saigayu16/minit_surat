@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // 2. Setup API Brevo
     // GANTIKAN 'YOUR_BREVO_API_KEY_HERE' DENGAN KEY SEBENAR ANDA
-    $apiKey = 'YOUR_BREVO_API_KEY_HERE'; 
+    $apiKey = getenv('BREVO_API_KEY');
     
     $config = SendinBlue\Client\Configuration::getDefaultConfiguration()
               ->setApiKey('api-key', $apiKey);
