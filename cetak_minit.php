@@ -32,12 +32,24 @@ $signature_data = $row['tandatangan'];
     <title>Borang Minit Rasmi - <?= $no_rujukan ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; padding: 20px; background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+        /* Background Image Setting */
+        body { 
+            margin: 0; padding: 20px; 
+            background-image: url('daftarsurat.jpg'); /* Pastikan fail gambar ada di folder yang sama */
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+            background-repeat: no-repeat;
+            font-family: 'Segoe UI', sans-serif; 
+        }
+        
         .page-box { 
-            background: #ffffff; width: 210mm; margin: 0 auto 100px auto; padding: 25mm; 
-            border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.95); /* Sedikit transparent untuk nampak latar belakang */
+            width: 210mm; margin: 0 auto 100px auto; padding: 25mm; 
+            border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             min-height: 297mm; position: relative; box-sizing: border-box;
         }
+        
         .header-title { font-size: 24px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; }
         
         .sticky-note { 
@@ -55,7 +67,7 @@ $signature_data = $row['tandatangan'];
         .sig-image { max-height: 60px; display: block; margin: 0 auto 5px auto; }
 
         .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; }
-        .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.3s; }
+        .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; text-decoration: none; display: inline-block; }
         .btn-print { background: #0f172a; color: white; }
         .btn-back { background: #e2e8f0; color: #475569; }
         .btn-action:hover { transform: scale(1.05); }
@@ -95,9 +107,9 @@ $signature_data = $row['tandatangan'];
 </div>
 
 <div class="btn-container no-print">
-    <button class="btn-action btn-back" onclick="window.history.back()">
+    <a href="homeadmin.php" class="btn-action btn-back">
         <i class="fa-solid fa-arrow-left"></i> KEMBALI
-    </button>
+    </a>
     <button class="btn-action btn-print" onclick="window.print()">
         <i class="fa-solid fa-print"></i> CETAK BORANG RASMI
     </button>
