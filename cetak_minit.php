@@ -13,7 +13,6 @@ $row = $stmt->get_result()->fetch_assoc();
 
 if (!$row) { die("Rekod tidak ditemui."); }
 
-// Variabel Data
 $status = strtoupper(trim($row['status'] ?? 'TIADA STATUS'));
 $no_rujukan = htmlspecialchars($row['no_rujukan'] ?? '-');
 $tarikh_terima = !empty($row['tarikh_terima']) ? date('d/m/Y', strtotime($row['tarikh_terima'])) : '-';
@@ -24,7 +23,6 @@ $arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'Tiada arahan.');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 $signature_data = $row['tandatangan']; 
 ?>
-
 <!DOCTYPE html>
 <html lang="ms">
 <head>
@@ -58,19 +56,16 @@ $signature_data = $row['tandatangan'];
         <h1>MINIT CERAIAN</h1>
         <div style="color: #10b981; font-weight: bold;"><i class="fa-solid fa-check-circle"></i> <?= $status ?></div>
     </div>
-
     <div class="info-grid">
         <div><div style="font-size:10px; font-weight:bold;">NO. RUJUKAN</div><strong><?= $no_rujukan ?></strong></div>
         <div><div style="font-size:10px; font-weight:bold;">TARIKH TERIMA</div><strong><?= $tarikh_terima ?></strong></div>
         <div><div style="font-size:10px; font-weight:bold;">DARIPADA</div><strong><?= $daripada ?></strong></div>
         <div><div style="font-size:10px; font-weight:bold;">DIDAFTARKAN OLEH</div><strong><?= $didaftarkan_oleh ?></strong></div>
     </div>
-
     <div class="sticky-note">
         <div style="color: #2563eb; font-weight: bold; margin-bottom: 10px;">ARAHAN: <?= $arahan ?></div>
         <div style="line-height: 1.6;"><?= nl2br(htmlspecialchars($catatan)) ?></div>
     </div>
-
     <div class="footer-signature">
         <?php if (!empty($signature_data)): ?>
             <div class="sig-box">
@@ -88,7 +83,6 @@ $signature_data = $row['tandatangan'];
 <button class="btn-print no-print" onclick="window.print()">
     <i class="fa-solid fa-print"></i> CETAK BORANG
 </button>
-
 </body>
 </html>
 <?php ob_end_flush(); ?>
