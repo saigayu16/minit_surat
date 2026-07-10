@@ -1,8 +1,8 @@
 <?php
-// Letakkan ini paling atas untuk paksa sistem tunjukkan semua ralat
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// This loads the libraries installed by Composer
 require_once __DIR__ . '/vendor/autoload.php';
 include('db.php');
 
@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email_staf = $_POST['email'];
     $nama_staf = $_POST['nama_staf'];
 
-    // 1. Semakan Staf (CHECKPOINT 1)
+    // 1. Verify Staff
     $stmt_check = $conn->prepare("SELECT email FROM staff WHERE email = ? AND nama = ?");
     $stmt_check->bind_param("ss", $email_staf, $nama_staf);
     $stmt_check->execute();
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("Ralat: Staf tidak dijumpai.");
     }
 
-    // 2. Setup Brevo (CHECKPOINT 2)
+    // 2. Setup Brevo
     $apiKey = getenv('BREVO_API_KEY');
     if (!$apiKey) {
         die("Ralat: BREVO_API_KEY tidak disetkan di Render.");
@@ -33,24 +33,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'subject' => 'Notifikasi Minit Surat',
             'sender' => ['name' => 'Sistem Minit Digital', 'email' => 'saigayu1605@gmail.com'],
             'to' => [['email' => $email_staf, 'name' => $nama_staf]],
-            'htmlContent' => "<html><body>Testing emel</body></html>"
+            'htmlContent' => "<html><body>Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk sistem.<br><br>Terima kasih.</body></html>"
         ]);
 
-        // (CHECKPOINT 3)
         $apiInstance->sendTransacEmail($sendSmtpEmail);
 
-        // Update DB
+        // 3. Update Database
         $stmt = $conn->prepare("UPDATE minit_surat SET status = 'DIMAKLUM', maklum_kepada = ? WHERE id = ?");
         $stmt->bind_param("si", $nama_staf, $id);
         $stmt->execute();
 
         echo "<script>alert('Berjaya!'); window.location='homeadmin.php';</script>";
-        exit; // Pastikan skrip berhenti di sini
-            
+        exit;
     } catch (Exception $e) {
-        // Paparkan ralat jika API gagal
         echo "<h1>Ralat API:</h1><pre>" . $e->getMessage() . "</pre>";
-        echo "<br><a href='javascript:history.back()'>Kembali</a>";
         exit;
     }
 }
