@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     
     // Logik Update Database
-     $stmt = $conn->prepare("UPDATE minit_surat SET maklum_kepada = ?, status = 'DIMAKLUM' WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE minit_surat SET staf_dimaklumkan = ?, status = 'DIMAKLUM' WHERE id = ?");
     $stmt->bind_param("si", $nama_staf, $surat_id);
     
     if ($stmt->execute()) {
