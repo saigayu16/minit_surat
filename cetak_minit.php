@@ -19,14 +19,10 @@ $no_rujukan = htmlspecialchars($row['no_rujukan'] ?? '-');
 $tarikh_terima = !empty($row['tarikh_terima']) ? date('d/m/Y', strtotime($row['tarikh_terima'])) : '-';
 $daripada = htmlspecialchars($row['daripada'] ?? '-');
 $didaftarkan_oleh = htmlspecialchars($row['didaftarkan_oleh'] ?? 'Admin');
-$perkara = htmlspecialchars($row['perkara'] ?? '-');
 $catatan = !empty($row['catatan']) ? $row['catatan'] : 'Tiada catatan tambahan diberikan.';
 $arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'Tiada arahan.');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
-
-// Logik Tandatangan (Mengambil terus dari database Base64)
 $signature_data = $row['tandatangan']; 
-$url_dokumen = "uploads/" . $row['fail_surat']; 
 ?>
 
 <!DOCTYPE html>
@@ -38,21 +34,30 @@ $url_dokumen = "uploads/" . $row['fail_surat'];
     <style>
         body { margin: 0; padding: 20px; background-color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
         .page-box { background: #fff; width: 210mm; margin: 0 auto 30px auto; padding: 60px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1); box-sizing: border-box; }
-        .document-view-box { width: 210mm; height: 600px; margin: 0 auto 30px auto; border: 2px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #fff; }
+        .document-view-box { width: 210mm; height: 800px; margin: 0 auto 30px auto; border: 2px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #fff; }
         .header-modern { border-bottom: 2px solid #0f172a; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
         .sticky-note { background: #fff; border: 2px dashed #cbd5e1; padding: 25px; margin: 30px 0; position: relative; }
         .footer-signature { display: flex; justify-content: flex-end; margin-top: 40px; }
         .sig-box { border: 1px solid #e2e8f0; padding: 10px; width: 200px; text-align: center; background: #f8fafc; }
-        .btn-print { background: #2563eb; color: white; padding: 15px 40px; border-radius: 8px; cursor: pointer; position: fixed; bottom: 30px; right: 30px; }
-        @media print { .no-print { display: none !important; } body { background: #fff; } .page-box { margin: 0 auto; box-shadow: none; border: none; } }
+        .btn-print { background: #2563eb; color: white; padding: 15px 40px; border: none; border-radius: 8px; cursor: pointer; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        @media print { .no-print { display: none !important; } body { background: #fff; } .page-box { margin: 0 auto; box-shadow: none; border: none; padding: 20mm; } }
     </style>
 </head>
 <body>
 
 <div class="document-view-box no-print">
-    <div style="padding: 10px; background: #f1f5f9; font-weight: bold;"><i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL</div>
-    <iframe src="<?= $url_dokumen ?>" width="100%" height="100%" frameborder="0"></iframe>
+    <div style="padding: 10px; background: #f1f5f9; font-weight: bold; border-bottom: 1px solid #ddd;">
+        <i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL
+    </div>
+    <?php
+    $fail_path = "uploads/" . $row['fail_surat'];
+    if (file_exists($fail_path)) {
+        echo '<iframe src="' . $fail_path . '" width="100%" height="100%" frameborder="0"></iframe>';
+    } else {
+        echo '<div style="padding: 20px; color: red;">Fail dokumen tidak dijumpai di server.</div>';
+    }
+    ?>
 </div>
 
 <div class="page-box">
@@ -82,7 +87,7 @@ $url_dokumen = "uploads/" . $row['fail_surat'];
                 </div>
             </div>
         <?php else: ?>
-            <div style="color: red;">(Tandatangan tidak dijumpai)</div>
+            <div style="color: #94a3b8; font-style: italic;">(Belum disahkan oleh Pengarah)</div>
         <?php endif; ?>
     </div>
 </div>
@@ -93,3 +98,4 @@ $url_dokumen = "uploads/" . $row['fail_surat'];
 
 </body>
 </html>
+<?php ob_end_flush(); ?>
