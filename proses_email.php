@@ -1,84 +1,116 @@
-<?php
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-// Pastikan path ke fail PHPMailer adalah betul mengikut folder projek anda
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-
-include('db.php');
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil data dari form
-    $id = $_POST['surat_id'];
-    $email = $_POST['email'];
-    $nama_staf = $_POST['nama_staf'];
-
-    // 2. Semakan: Adakah staf wujud dalam database?
-    $stmt_check = $conn->prepare("SELECT nama FROM staff WHERE email = ? AND nama = ?");
-    $stmt_check->bind_param("ss", $email, $nama_staf);
-    $stmt_check->execute();
-    $result = $stmt_check->get_result();
-
-    if ($result->num_rows === 0) {
-        echo "<script>
-                alert('Ralat: Maklumat staf tidak sah! Sila pastikan nama dan e-mel sepadan dengan rekod.'); 
-                window.history.back();
-              </script>";
-        exit;
-    }
-
-    // 3. Proses Upload Fail
-    if (!file_exists('uploads')) { mkdir('uploads', 0777, true); }
+<?php include('db.php'); $id = $_GET['id'] ?? ''; ?>
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maklum Kepada Staf</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    $file_name = time() . "_" . basename($_FILES["dokumen_minit"]["name"]);
-    $target_file = "uploads/" . $file_name;
-    
-    if (!move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $target_file)) {
-        echo "<script>alert('Gagal memuat naik fail.'); window.history.back();</script>";
-        exit;
-    }
+    <style>
+       body { 
+            font-family: 'Quicksand', sans-serif; 
+            /* Gantikan 'background-anda.jpg' dengan nama fail gambar anda */
+            background-image: url('daftarsurat.jpg'); 
+            background-size: cover;          /* Gambar akan tutup seluruh skrin */
+            background-position: center;     /* Gambar sentiasa di tengah */
+            background-attachment: fixed;    /* Gambar tidak bergerak bila scroll */
+            background-repeat: no-repeat;
+            
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+        .box { 
+            background: #fff9c4; /* Warna kuning sticky note */
+            padding: 40px; 
+            border-radius: 2px 20px 2px 20px; 
+            width: 100%; 
+            max-width: 400px; 
+            box-shadow: 15px 15px 30px rgba(0,0,0,0.15); /* Bayang lebih dalam */
+            position: relative;
+            transform: rotate(-2deg); /* Kesan senget comel */
+            transition: transform 0.3s;
+        }
 
-    // 4. Setup & Hantar E-mel (SMTP)
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'saigayu1605@gmail.com'; 
-        $mail->Password = 'sspxgfwadkfghbfs'; // App Password anda
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
+        .box:hover { transform: rotate(0deg) scale(1.02); } /* Nota jadi tegak bila mouse atas */
 
-        $mail->setFrom('saigayu1605@gmail.com', 'Sistem Minit Digital');
-        $mail->addAddress($email);
-        $mail->addAttachment($target_file);
+        h3 { margin: 0 0 20px 0; color: #5d4037; text-align: center; font-weight: 700; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #795548; font-size: 0.9rem; font-weight: 600; }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px dashed #fbc02d; 
+            border-radius: 5px; 
+            background: rgba(255,255,255,0.4);
+            box-sizing: border-box; 
+            font-family: inherit;
+        }
 
-        $mail->isHTML(true);
-        $mail->Subject = 'Notifikasi Minit Surat';
-        $mail->Body    = "Hai <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat ini. Sila rujuk dokumen minit yang dilampirkan.<br><br>Terima kasih.";
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background: #f57c00; 
+            color: white; 
+            border: none; 
+            border-radius: 50px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover { background: #e65100; transform: scale(1.03); }
 
-        $mail->send();
+        /* Pin comel di atas nota */
+        .pin {
+            width: 25px;
+            height: 25px;
+            background: radial-gradient(circle at 30% 30%, #ef5350, #b71c1c);
+            border-radius: 50%;
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            margin-left: -12.5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            
+        }
+        background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('background-anda.jpg');
+    </style>
+</head>
+<body>
 
-        // 5. Kemaskini Database
-        // Mengemaskini status dan menyimpan nama staf dalam kolum maklum_kepada
-        $stmt = $conn->prepare("UPDATE minit_surat SET status = 'DIMAKLUM', maklum_kepada = ? WHERE id = ?");
-        $stmt->bind_param("ss", $nama_staf, $id);
-        $stmt->execute();
+    <div class="box">
+        <div class="pin"></div>
+        <h3><i class="fa-solid fa-note-sticky"></i> Nota Makluman</h3>
+        
+        <form action="proses_email.php" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="surat_id" value="<?= htmlspecialchars($id) ?>">
+            
+            <div class="form-group">
+                <label>Nama Staf:</label>
+                <input type="text" name="nama_staf" required>
+            </div>
+            
+            <div class="form-group">
+                <label>E-mel Staf:</label>
+                <input type="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Muat Naik Minit:</label>
+                <input type="file" name="dokumen_minit" accept=".pdf,.jpg,.png" required>
+            </div>
+            
+            <button type="submit">Hantar Sekarang!</button>
+        </form>
+    </div>
 
-        // 6. Redirect ke halaman admin
-        echo "<script>
-                alert('E-mel berjaya dihantar dan status surat dikemaskini kepada DIMAKLUM!'); 
-                window.location='homeadmin.php';
-              </script>";
-              
-    } catch (Exception $e) {
-        // Paparkan ralat jika e-mel gagal dihantar
-        echo "<script>
-                alert('E-mel gagal dihantar. Ralat: " . addslashes($mail->ErrorInfo) . "'); 
-                window.history.back();
-              </script>";
-    }
-}
-?>
+</body>
+</html>
