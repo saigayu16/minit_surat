@@ -2,7 +2,13 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once __DIR__ . '/vendor/autoload.php';
+// SEMAKAN PENTING: Pastikan folder vendor wujud sebelum panggil library
+$vendorPath = __DIR__ . '/vendor/autoload.php';
+if (!file_exists($vendorPath)) {
+    die("<h1>Ralat Sistem:</h1><p>Library tidak dijumpai. Sila pastikan anda telah menjalankan 'composer install' di Render.</p>");
+}
+require_once $vendorPath;
+
 include('db.php');
 session_start();
 
@@ -13,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama_staf = mysqli_real_escape_string($conn, $_POST['nama_staf']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     
-    // 1. SEMAKAN: Adakah staf wujud
+    // 1. SEMAKAN: Adakah staf wujud dalam database
     $stmt_check = $conn->prepare("SELECT email FROM staff WHERE email = ? AND nama = ?");
     $stmt_check->bind_param("ss", $email, $nama_staf);
     $stmt_check->execute();
@@ -22,16 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit;
     }
 
-    // 2. Proses Upload Fail (Ke folder sementara untuk mengelak 'Permission Denied')
+    // 2. Proses Upload Fail (Simpan dalam folder sementara)
     $attachmentPath = '';
     if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
         $tempDir = sys_get_temp_dir() . '/';
         $file_name = time() . "_" . basename($_FILES["dokumen_minit"]["name"]);
         $attachmentPath = $tempDir . $file_name;
-        
-        if (!move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $attachmentPath)) {
-            die("Ralat: Gagal memproses fail upload.");
-        }
+        move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $attachmentPath);
     }
 
     // 3. Setup API Brevo
