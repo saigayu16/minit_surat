@@ -22,12 +22,12 @@ $total_perlu_sahkan = 0;
 $total_selesai = 0;
 $total_kkkb = 0;
 
-// Kira Dokumen Menunggu Pengesahan (Status BUKAN 'SELESAI TANDATANGAN')
-$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN'");
+// Kira Dokumen Menunggu Pengesahan (Status BUKAN 'SELESAI TANDATANGAN' dan BUKAN 'DIMAKLUM')
+$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
 if($count_wait) $total_perlu_sahkan = $count_wait->fetch_assoc()['total'];
 
-// Kira Dokumen Selesai (Status 'SELESAI TANDATANGAN')
-$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN'");
+// Kira Dokumen Selesai (Status 'SELESAI TANDATANGAN' ATAU 'DIMAKLUM')
+$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
 if($count_done) $total_selesai = $count_done->fetch_assoc()['total'];
 
 // Kira Jumlah Surat Kolej Komuniti Kepala Batas
@@ -153,7 +153,9 @@ if($count_kkkb) $total_kkkb = $count_kkkb->fetch_assoc()['total'];
                 if ($res && $res->num_rows > 0) {
                     while($row = $res->fetch_assoc()) {
                         $status = trim($row['status'] ?? 'BARU');
-                        $is_done = (strcasecmp($status, 'SELESAI TANDATANGAN') == 0);
+                        
+                        // LOGIK BARU: Selesai jika status tandatangan atau dimaklum
+                        $is_done = (strcasecmp($status, 'SELESAI TANDATANGAN') == 0 || strcasecmp($status, 'DIMAKLUM') == 0);
                         $badge = $is_done ? 'done' : 'wait';
                         
                         echo "<tr>
@@ -164,6 +166,7 @@ if($count_kkkb) $total_kkkb = $count_kkkb->fetch_assoc()['total'];
                             <td><span class='status-badge $badge'>$status</span></td>
                             <td>";
                         
+                        // Paparkan "Lihat" jika sudah selesai, jika tidak paparkan "Sahkan"
                         if ($is_done) {
                             echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
                         } else {
