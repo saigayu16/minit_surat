@@ -2,36 +2,36 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Load library Brevo melalui Composer
 require_once __DIR__ . '/vendor/autoload.php';
 include('db.php');
 session_start();
 
 $id = $_GET['id'] ?? '';
 
-// Proses bila borang dihantar
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $surat_id = intval($_POST['surat_id']);
     $nama_staf = mysqli_real_escape_string($conn, $_POST['nama_staf']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     
-    // 1. SEMAKAN: Adakah staf wujud dalam database?
+    // 1. SEMAKAN: Adakah staf wujud
     $stmt_check = $conn->prepare("SELECT email FROM staff WHERE email = ? AND nama = ?");
     $stmt_check->bind_param("ss", $email, $nama_staf);
     $stmt_check->execute();
     if ($stmt_check->get_result()->num_rows === 0) {
-        echo "<script>alert('Ralat: Maklumat staf tidak sah! Sila pastikan nama dan e-mel sepadan dengan rekod.'); window.history.back();</script>";
+        echo "<script>alert('Ralat: Maklumat staf tidak sah!'); window.history.back();</script>";
         exit;
     }
 
-    // 2. Proses Upload Fail (Minit)
+    // 2. Proses Upload Fail (Ke folder sementara untuk mengelak 'Permission Denied')
     $attachmentPath = '';
     if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
-        $uploadDir = __DIR__ . '/uploads/';
-        if (!file_exists($uploadDir)) { mkdir($uploadDir, 0755, true); }
+        $tempDir = sys_get_temp_dir() . '/';
         $file_name = time() . "_" . basename($_FILES["dokumen_minit"]["name"]);
-        $attachmentPath = $uploadDir . $file_name;
-        move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $attachmentPath);
+        $attachmentPath = $tempDir . $file_name;
+        
+        if (!move_uploaded_file($_FILES["dokumen_minit"]["tmp_name"], $attachmentPath)) {
+            die("Ralat: Gagal memproses fail upload.");
+        }
     }
 
     // 3. Setup API Brevo
@@ -46,10 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'subject' => 'Notifikasi Minit Surat Baru',
             'sender' => ['name' => 'Sistem Minit Digital', 'email' => 'saigayu1605@gmail.com'],
             'to' => [['email' => $email, 'name' => $nama_staf]],
-            'htmlContent' => "<html><body>Tuan/Puan <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru dalam Sistem Minit Digital. Sila semak sistem.<br><br>Terima kasih.</body></html>"
+            'htmlContent' => "<html><body>Tuan/Puan <strong>$nama_staf</strong>,<br><br>Anda telah dimaklumkan mengenai surat baru. Sila semak sistem.<br><br>Terima kasih.</body></html>"
         ];
 
-        // Lampirkan fail jika ada
         if ($attachmentPath && file_exists($attachmentPath)) {
             $emailData['attachment'] = [[
                 'name' => basename($attachmentPath),
