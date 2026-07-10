@@ -60,16 +60,24 @@ $total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
         .wait { background: #fee2e2; color: #991b1b; }
         .done { background: #d1fae5; color: #065f46; }
         .selesai-badge { background: #e0e7ff; color: #4338ca; }
-        /* Style butang baru */
+        
+        /* Butang */
         .btn-view { display: inline-block; padding: 6px 12px; background: #e0e7ff; color: #4338ca; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; }
         .btn-print { display: inline-block; padding: 6px 12px; background: #dcfce7; color: #166534; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; }
+        .btn-daftar { background: #059669; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: background 0.3s; }
+        .btn-daftar:hover { background: #047857; }
+        .header-actions { display: flex; align-items: center; gap: 20px; }
     </style>
 </head>
 <body>
 
 <nav class="navbar">
     <h2><i class="fa-solid fa-folder-open"></i> Sistem Minit Digital</h2>
-    <div><?= htmlspecialchars($user_name) ?> | <a href="logout.php" style="color:#f87171; text-decoration:none;">Log Keluar</a></div>
+    <div class="header-actions">
+        <span><?= htmlspecialchars($user_name) ?></span>
+        <a href="daftar_surat.php" class="btn-daftar"><i class="fa-solid fa-plus"></i> Daftar Surat Masuk</a>
+        <a href="logout.php" style="color:#f87171; text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Log Keluar</a>
+    </div>
 </nav>
 
 <div class="container">
