@@ -2,25 +2,24 @@
 include('db.php'); 
 session_start();
 
+$id = $_GET['id'] ?? '';
+
 // Proses bila borang dihantar
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $surat_id = intval($_POST['surat_id']);
     $nama_staf = mysqli_real_escape_string($conn, $_POST['nama_staf']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
     
-    // Kemaskini kolum 'maklum_kepada' yang sedia ada dalam database anda
-    $stmt = $conn->prepare("UPDATE minit_surat SET maklum_kepada = ?, status = 'DIMAKLUM' WHERE id = ?");
+    // Logik Update Database
+     $stmt = $conn->prepare("UPDATE minit_surat SET maklum_kepada = ?, status = 'DIMAKLUM' WHERE id = ?");
     $stmt->bind_param("si", $nama_staf, $surat_id);
     
     if ($stmt->execute()) {
         // Berjaya: Redirect ke dashboard
         header("Location: homeadmin.php?success=1");
         exit();
-    } else {
-        echo "Ralat: " . $conn->error;
     }
 }
-
-$id = $_GET['id'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -60,7 +59,7 @@ $id = $_GET['id'] ?? '';
         <div class="pin"></div>
         <h3><i class="fa-solid fa-note-sticky"></i> Nota Makluman</h3>
         
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="surat_id" value="<?= htmlspecialchars($id) ?>">
             
             <div class="form-group">
@@ -71,6 +70,11 @@ $id = $_GET['id'] ?? '';
             <div class="form-group">
                 <label>E-mel Staf:</label>
                 <input type="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Muat Naik Minit (Pilihan):</label>
+                <input type="file" name="dokumen_minit" accept=".pdf,.jpg,.png">
             </div>
             
             <button type="submit">Hantar Sekarang!</button>
