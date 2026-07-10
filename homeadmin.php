@@ -171,12 +171,9 @@ if($count_done) $total_done = $count_done->fetch_assoc()['total'];
                         // Logik Tindakan
                         $tindakan = "<a href='view_surat.php?id={$row['id']}' class='action-link' style='color:#2563eb;'><i class='fa-solid fa-eye'></i> Lihat</a>";
                         
-                        // Tambah butang Cetak jika status DISAHKAN
                         if (strcasecmp($status, 'DISAHKAN') == 0) {
                             $tindakan .= "<br><a href='cetak_minit.php?id={$row['id']}' target='_blank' class='action-link' style='color:#16a34a;'><i class='fa-solid fa-print'></i> Cetak</a>";
                         }
-
-                        $maklum_link = "<a href='maklum.php?id={$row['id']}' class='action-link' style='color:#7c3aed;'><i class='fa-solid fa-paper-plane'></i> Maklum</a>";
 
                         echo "<tr>
                             <td>".date('d/m/Y', strtotime($row['tarikh_terima']))."</td>
@@ -186,10 +183,21 @@ if($count_done) $total_done = $count_done->fetch_assoc()['total'];
                             <td>".htmlspecialchars($row['didaftarkan_oleh'] ?? '-')."</td>
                             <td><span class='status-badge {$badge}'>{$status}</span></td>
                             <td><div style='display:flex; flex-direction:column;'>{$tindakan}</div></td>
-                            <td><div style='display:flex; flex-direction:column; align-items:center;'>
-                                <span style='background:#e6fffa; color:#0d9488; padding:3px 10px; border-radius:6px; font-size:0.75rem; font-weight:700;'>".htmlspecialchars($row['maklum_kepada'] ?? '-')."</span>
-                                {$maklum_link}
-                            </div></td>
+                            <td>
+                                <div style='display:flex; flex-direction:column; align-items:center;'>";
+                                
+                                if (!empty($row['staf_dimaklumkan'])) {
+                                    echo "<span style='background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold;'>
+                                            <i class='fa-solid fa-user-check'></i> " . htmlspecialchars($row['staf_dimaklumkan']) . "
+                                          </span>";
+                                } else {
+                                    echo "<a href='proses_maklum.php?id={$row['id']}' class='action-link' style='color:#7c3aed;'>
+                                            <i class='fa-solid fa-paper-plane'></i> Maklum
+                                          </a>";
+                                }
+
+                        echo "  </div>
+                            </td>
                         </tr>";
                     }
                 } else {
