@@ -50,14 +50,7 @@ $signature_data = $row['tandatangan'];
     <div style="padding: 10px; background: #f1f5f9; font-weight: bold; border-bottom: 1px solid #ddd;">
         <i class="fa-solid fa-file-pdf"></i> DOKUMEN ASAL
     </div>
-    <?php
-    $fail_path = "uploads/" . $row['fail_surat'];
-    if (file_exists($fail_path)) {
-        echo '<iframe src="' . $fail_path . '" width="100%" height="100%" frameborder="0"></iframe>';
-    } else {
-        echo '<div style="padding: 20px; color: red;">Fail dokumen tidak dijumpai di server.</div>';
-    }
-    ?>
+    <iframe src="papar_dokumen.php?id=<?= $id ?>" width="100%" height="100%" frameborder="0"></iframe>
 </div>
 
 <div class="page-box">
