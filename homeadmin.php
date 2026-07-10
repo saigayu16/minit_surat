@@ -26,10 +26,10 @@ $total_done = 0;
 $count_all = $conn->query("SELECT COUNT(*) as total FROM minit_surat");
 if($count_all) $total_surat = $count_all->fetch_assoc()['total'];
 
-$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI' OR status IS NULL");
+$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'DISAHKAN'");
 if($count_wait) $total_wait = $count_wait->fetch_assoc()['total'];
 
-$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI'");
+$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'DISAHKAN'");
 if($count_done) $total_done = $count_done->fetch_assoc()['total'];
 ?>
 
@@ -112,7 +112,7 @@ if($count_done) $total_done = $count_done->fetch_assoc()['total'];
         .wait { background: #fee2e2; color: #991b1b; }
         .done { background: #d1fae5; color: #065f46; }
         .dimaklum { background: #e0e7ff; color: #4338ca; }
-        .action-link { text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .action-link { text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; margin: 2px 0; }
     </style>
 </head>
 <body>
@@ -166,8 +166,16 @@ if($count_done) $total_done = $count_done->fetch_assoc()['total'];
                 if ($res && $res->num_rows > 0) {
                     while($row = $res->fetch_assoc()) {
                         $status = trim($row['status'] ?? 'Menunggu Pengesahan');
-                        $badge = (strcasecmp($status, 'SELESAI') == 0) ? 'done' : ((strcasecmp($status, 'DIMAKLUM') == 0) ? 'dimaklum' : 'wait');
-                        $tindakan = (strcasecmp($status, 'SELESAI') == 0) ? "<a href='cetak_minit.php?id={$row['id']}' target='_blank' class='action-link' style='color:#16a34a;'><i class='fa-solid fa-print'></i> Cetak</a>" : "<a href='view_surat.php?id={$row['id']}' class='action-link' style='color:#2563eb;'><i class='fa-solid fa-eye'></i> Lihat</a>";
+                        $badge = (strcasecmp($status, 'DISAHKAN') == 0) ? 'done' : ((strcasecmp($status, 'DIMAKLUM') == 0) ? 'dimaklum' : 'wait');
+                        
+                        // Logik Tindakan
+                        $tindakan = "<a href='view_surat.php?id={$row['id']}' class='action-link' style='color:#2563eb;'><i class='fa-solid fa-eye'></i> Lihat</a>";
+                        
+                        // Tambah butang Cetak jika status DISAHKAN
+                        if (strcasecmp($status, 'DISAHKAN') == 0) {
+                            $tindakan .= "<br><a href='cetak_minit.php?id={$row['id']}' target='_blank' class='action-link' style='color:#16a34a;'><i class='fa-solid fa-print'></i> Cetak</a>";
+                        }
+
                         $maklum_link = "<a href='maklum.php?id={$row['id']}' class='action-link' style='color:#7c3aed;'><i class='fa-solid fa-paper-plane'></i> Maklum</a>";
 
                         echo "<tr>
@@ -175,9 +183,9 @@ if($count_done) $total_done = $count_done->fetch_assoc()['total'];
                             <td>".htmlspecialchars($row['no_rujukan'] ?? '-')."</td>
                             <td>".htmlspecialchars($row['daripada'] ?? '-')."</td>
                             <td>".htmlspecialchars($row['perkara'] ?? '-')."</td>
-                            <td>{$row['didaftarkan_oleh']}</td>
+                            <td>".htmlspecialchars($row['didaftarkan_oleh'] ?? '-')."</td>
                             <td><span class='status-badge {$badge}'>{$status}</span></td>
-                            <td>{$tindakan}</td>
+                            <td><div style='display:flex; flex-direction:column;'>{$tindakan}</div></td>
                             <td><div style='display:flex; flex-direction:column; align-items:center;'>
                                 <span style='background:#e6fffa; color:#0d9488; padding:3px 10px; border-radius:6px; font-size:0.75rem; font-weight:700;'>".htmlspecialchars($row['maklum_kepada'] ?? '-')."</span>
                                 {$maklum_link}
