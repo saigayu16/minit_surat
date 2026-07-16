@@ -3,29 +3,61 @@ session_start();
 include('db.php'); // Pastikan db.php menggunakan PDO
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $password = $_POST['password']; // Ingat: gunakan password_verify jika anda simpan hash
-    $role = $_POST['role'];
+    $username_input = $_POST['username'] ?? '';
+    $password_input = $_POST['password'] ?? '';
+    $role_input     = $_POST['role'] ?? '';
 
-    // Gunakan PDO untuk query (PENTING untuk Neon)
-    $stmt = $conn->prepare("SELECT * FROM users WHERE username = :username AND role = :role");
-    $stmt->execute(['username' => $username, 'role' => $role]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Semak password
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_logged_in'] = true;
-        $_SESSION['user_name'] = $user['username'];
-        $_SESSION['user_role'] = $user['role'];
+    try {
+        // Menggunakan nama lajur 'nama' berdasarkan DBeaver anda
+        $stmt = $conn->prepare("SELECT * FROM users WHERE nama = :nama AND role = :role");
+        $stmt->execute([
+            'nama' => $username_input, 
+            'role' => $role_input
+        ]);
         
-        // Redirect berdasarkan role
-        switch ($role) {
-            case 'admin': header("Location: homeadmin.php"); break;
-            case 'pengarah': header("Location: homedirector.php"); break;
-            // ... dan seterusnya
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Semakan log masuk (Menggunakan perbandingan teks biasa kerana data anda '12345')
+        if ($user && $password_input === $user['password']) {
+            
+            // Set session
+            $_SESSION['user_logged_in'] = true;
+            $_SESSION['user_name']      = $user['nama'];
+            $_SESSION['user_role']      = $user['role'];
+            
+            // Redirect mengikut peranan
+            switch ($user['role']) {
+                case 'admin': 
+                    header("Location: homeadmin.php"); 
+                    break;
+                case 'pengarah': 
+                    header("Location: homedirector.php"); 
+                    break;
+                case 'tpp': 
+                    header("Location: hometpp.php"); 
+                    break;
+                case 'tpa': 
+                    header("Location: hometpa.php"); 
+                    break;
+                default: 
+                    header("Location: login.php"); 
+                    break;
+            }
+            exit;
+            
+        } else {
+            // Login gagal
+            header("Location: login.php?error=1");
+            exit;
         }
-    } else {
-        header("Location: login.php?error=1");
+
+    } catch (PDOException $e) {
+        // Jika ada ralat database, paparkan mesej (boleh dibuang untuk produksi)
+        die("Ralat sistem: " . $e->getMessage());
     }
+} else {
+    // Jika akses direct ke auth.php tanpa POST
+    header("Location: login.php");
+    exit;
 }
 ?>
