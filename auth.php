@@ -1,62 +1,43 @@
 <?php
-// 1. Start output buffering to prevent header errors
-ob_start(); 
-
+ob_start();
 session_start();
-include('db.php');
+include('db.php'); // Pastikan db.php anda menggunakan kod PDO yang saya beri sebelum ini
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Sanitize input
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $username = $_POST['username'];
     $password = $_POST['password']; 
     $role     = $_POST['role'];
 
-    // Use prepared statements to prevent SQL injection
-    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? AND role = ?");
-    $stmt->bind_param("ss", $username, $role);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
+    // Gunakan PDO untuk query (serasi dengan PostgreSQL)
+    $stmt = $conn->prepare("SELECT * FROM users WHERE nama = :username AND role = :role");
+    $stmt->execute(['username' => $username, 'role' => $role]);
+    $user = $stmt->fetch();
 
-    // Verify user and password
-    if ($user && $password === $user['password']) {
+    // Verify user and password (Gunakan password_verify jika password di hash)
+    // Jika password dalam database adalah plain text, gunakan: $password === $user['password']
+    if ($user && ($password === $user['password'])) {
         session_regenerate_id(true);
 
-        // Set session variables
         $_SESSION['user_logged_in'] = true;
-        $_SESSION['user_name']      = $user['username'];
+        $_SESSION['user_name']      = $user['nama']; // Tukar kepada 'nama' mengikut table Neon
         $_SESSION['user_role']      = $user['role'];
         $_SESSION['user_email']     = $user['email'];
 
-        // Redirect based on role
         switch ($role) {
-            case 'admin':
-                header("Location: homeadmin.php");
-                break;
-            case 'pengarah':
-                header("Location: homedirector.php");
-                break;
-            case 'tpp':
-                header("Location: hometpp.php");
-                break;
-            case 'tpa':
-                header("Location: hometpa.php");
-                break;
-            default:
-                header("Location: login.php");
-                break;
+            case 'admin': header("Location: homeadmin.php"); break;
+            case 'pengarah': header("Location: homedirector.php"); break;
+            case 'tpp': header("Location: hometpp.php"); break;
+            case 'tpa': header("Location: hometpa.php"); break;
+            default: header("Location: login.php"); break;
         }
-        exit(); // Always exit after header redirect
+        exit();
     } else {
-        // Redirect with error instead of using echo/alert
         header("Location: login.php?error=1");
         exit();
     }
 } else {
-    // Access denied if not POST
     header("Location: login.php");
     exit();
 }
-// End output buffering
-ob_end_flush(); 
+ob_end_flush();
 ?>
