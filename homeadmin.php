@@ -3,7 +3,7 @@
 ob_start();
 session_start();
 
-// Panggil fail sambungan DB (Pastikan db.php anda menggunakan PDO)
+// Panggil fail sambungan DB
 include('db.php'); 
 
 // 1. SEMAK SESI
@@ -12,14 +12,15 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true)
     exit;
 }
 
-// 2. AMBIL NAMA USER
+// 2. AMBIL NAMA DAN ROLE USER DARI SESI (BETULKAN DI SINI)
 $user_name = $_SESSION['user_name'] ?? 'Admin';
-$user_role = "Admin";
+$user_role = $_SESSION['user_role'] ?? 'Admin'; 
 
 // 3. KIRA STATISTIK (Menggunakan PDO)
 try {
     // Jumlah semua surat
-    $total_surat = $conn->query("SELECT COUNT(*) FROM minit_surat")->fetchColumn();
+    $count_all = $conn->query("SELECT COUNT(*) FROM minit_surat");
+    $total_surat = $count_all->fetchColumn();
 
     // Kira 'Menunggu'
     $stmt_wait = $conn->query("SELECT COUNT(*) FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
@@ -80,7 +81,7 @@ try {
 <nav class="navbar">
     <h2><i class="fa-solid fa-folder-open"></i> Sistem Minit Digital</h2>
     <div class="header-actions">
-        <span><?= htmlspecialchars($user_name) ?></span>
+        <span><?= htmlspecialchars($user_name) ?> (<?= htmlspecialchars($user_role) ?>)</span>
         <a href="daftar_surat.php" class="btn-daftar"><i class="fa-solid fa-plus"></i> Daftar Surat Masuk</a>
         <a href="logout.php" style="color:#f87171; text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Log Keluar</a>
     </div>
@@ -102,7 +103,6 @@ try {
             </thead>
             <tbody>
                 <?php
-                // Menggunakan fetch(PDO::FETCH_ASSOC) untuk PostgreSQL
                 $res = $conn->query("SELECT * FROM minit_surat ORDER BY id DESC");
                 while($row = $res->fetch(PDO::FETCH_ASSOC)) {
                     $status = trim($row['status'] ?? 'Menunggu');
