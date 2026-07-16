@@ -1,6 +1,7 @@
 <?php
 // mailer.php
-require_once __DIR__ . '/vendor/autoload.php';
+// Jika anda tidak menggunakan library rasmi Brevo, buang baris 'require_once' ini
+// require_once __DIR__ . '/vendor/autoload.php'; 
 
 function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64 = null, $file_name = null) {
     $api_key = getenv('BREVO_API_KEY');
@@ -12,7 +13,6 @@ function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64
         "htmlContent" => $content
     ];
 
-    // Jika ada lampiran (attachment), tambah ke dalam data
     if ($attachment_base64 && $file_name) {
         $data["attachment"] = [["content" => $attachment_base64, "name" => $file_name]];
     }
@@ -27,7 +27,12 @@ function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    // Return true jika berjaya (HTTP 201 Created)
-    return ($http_code == 201);
+    // DEBUG: Jika gagal, simpan ralat ke dalam log pelayan
+    if ($http_code !== 201 && $http_code !== 200) {
+        error_log("Brevo API Gagal (HTTP $http_code): " . $response);
+        return false;
+    }
+
+    return true;
 }
 ?>
