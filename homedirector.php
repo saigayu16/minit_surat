@@ -1,14 +1,12 @@
 <?php
 session_start();
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Panggil fail sambungan DB
+// Panggil fail sambungan DB (Pastikan db.php menggunakan PDO)
 include('db.php'); 
 
 // 1. SEMAK SESI & ROLE PENGARAH
-// Pastikan hanya user dengan role 'pengarah' sahaja boleh akses halaman ini
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'pengarah') {
     header("Location: login.php");
     exit;
@@ -17,22 +15,27 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'pengarah') {
 $user_name = $_SESSION['user_name'] ?? 'Pengarah';
 $user_role = "Pengarah";
 
-// 2. KIRA STATISTIK KHAS PENGARAH
+// 2. KIRA STATISTIK (Menggunakan PDO)
 $total_perlu_sahkan = 0;
 $total_selesai = 0;
 $total_kkkb = 0;
 
-// Kira Dokumen Menunggu Pengesahan (Status BUKAN 'SELESAI TANDATANGAN' dan BUKAN 'DIMAKLUM')
-$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
-if($count_wait) $total_perlu_sahkan = $count_wait->fetch_assoc()['total'];
+try {
+    // Kira Dokumen Menunggu Pengesahan
+    $stmt_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
+    $total_perlu_sahkan = $stmt_wait->fetchColumn();
 
-// Kira Dokumen Selesai (Status 'SELESAI TANDATANGAN' ATAU 'DIMAKLUM')
-$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
-if($count_done) $total_selesai = $count_done->fetch_assoc()['total'];
+    // Kira Dokumen Selesai
+    $stmt_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
+    $total_selesai = $stmt_done->fetchColumn();
 
-// Kira Jumlah Surat Kolej Komuniti Kepala Batas
-$count_kkkb = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE kolej = 'Kolej Komuniti Kepala Batas'");
-if($count_kkkb) $total_kkkb = $count_kkkb->fetch_assoc()['total'];
+    // Kira Jumlah Surat Kolej Komuniti Kepala Batas
+    $stmt_kkkb = $conn->prepare("SELECT COUNT(*) as total FROM minit_surat WHERE kolej = :kolej");
+    $stmt_kkkb->execute(['kolej' => 'Kolej Komuniti Kepala Batas']);
+    $total_kkkb = $stmt_kkkb->fetchColumn();
+} catch (PDOException $e) {
+    // Biarkan 0 jika ada error
+}
 ?>
 
 <!DOCTYPE html>
@@ -56,26 +59,14 @@ if($count_kkkb) $total_kkkb = $count_kkkb->fetch_assoc()['total'];
             --border-color: #e2e8f0;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('homedirector.jpg'); 
-            background-repeat: no-repeat;
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center center;
-            margin: 0; padding: 0; color: var(--text-main);
-        }
-
+        body { font-family: 'Inter', sans-serif; background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('homedirector.jpg'); background-repeat: no-repeat; background-size: cover; background-attachment: fixed; background-position: center center; margin: 0; padding: 0; color: var(--text-main); }
         .navbar { background: var(--primary-color); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .navbar h2 { margin: 0; font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
         .navbar h2 i { color: #fbbf24; }
-
         .user-info { display: flex; align-items: center; gap: 15px; font-size: 0.95rem; }
         .role-badge { background: #3b82f6; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
         .btn-logout { color: #f87171; text-decoration: none; font-weight: 600; }
-
         .container { max-width: 1300px; margin: 40px auto; padding: 0 20px; }
-
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 35px; }
         .stat-card { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .stat-info h4 { margin: 0; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
@@ -84,23 +75,17 @@ if($count_kkkb) $total_kkkb = $count_kkkb->fetch_assoc()['total'];
         .icon-sign { background: #eff6ff; color: #2563eb; } 
         .icon-done { background: #f0fdf4; color: #16a34a; } 
         .icon-kolej { background: #fef3c7; color: #d97706; }
-
         .table-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: white; }
         .table-container { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid var(--border-color); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { background: #f8fafc; color: var(--text-muted); padding: 16px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
         td { padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; color: #334155; }
-        tr:hover td { background-color: #f8fafc; }
-
         .status-badge { padding: 6px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; }
         .wait { background: #fee2e2; color: #991b1b; }
         .done { background: #d1fae5; color: #065f46; }
-
-        .btn-action { padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .btn-action { padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         .btn-view { background: #fff7ed; color: var(--accent-view); border: 1px solid #ffedd5; }
-        .btn-view:hover { background: var(--accent-view); color: white; }
         .btn-sign { background: var(--accent-sign); color: white; }
-        .btn-sign:hover { background: #1d4ed8; }
     </style>
 </head>
 <body>
@@ -117,71 +102,50 @@ if($count_kkkb) $total_kkkb = $count_kkkb->fetch_assoc()['total'];
 <div class="container">
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-info"><h4>Perlu Kelulusan</h4><p><?= $total_perlu_sahkan ?></p></div>
+            <div class="stat-info"><h4>Perlu Kelulusan</h4><p><?= (int)$total_perlu_sahkan ?></p></div>
             <div class="stat-icon icon-sign"><i class="fa-solid fa-file-signature"></i></div>
         </div>
         <div class="stat-card">
-            <div class="stat-info"><h4>Selesai Disahkan</h4><p><?= $total_selesai ?></p></div>
+            <div class="stat-info"><h4>Selesai Disahkan</h4><p><?= (int)$total_selesai ?></p></div>
             <div class="stat-icon icon-done"><i class="fa-solid fa-circle-check"></i></div>
         </div>
         <div class="stat-card">
-            <div class="stat-info"><h4>Surat KKKB</h4><p><?= $total_kkkb ?></p></div>
+            <div class="stat-info"><h4>Surat KKKB</h4><p><?= (int)$total_kkkb ?></p></div>
             <div class="stat-icon icon-kolej"><i class="fa-solid fa-school"></i></div>
         </div>
-    </div>
-
-    <div class="table-title">
-        <i class="fa-solid fa-folder-tree" style="color: #38bdf8;"></i>
-        Senarai Dokumen Minit Pengarah
     </div>
 
     <div class="table-container">
         <table>
             <thead>
-                <tr>
-                    <th>Rujukan</th>
-                    <th>Pendaftar</th>
-                    <th>Asal Kolej</th>
-                    <th>Perkara</th>
-                    <th>Status</th>
-                    <th>Tindakan Eksekutif</th>
-                </tr>
+                <tr><th>Rujukan</th><th>Pendaftar</th><th>Asal Kolej</th><th>Perkara</th><th>Status</th><th>Tindakan</th></tr>
             </thead>
             <tbody>
                 <?php
-                $res = $conn->query("SELECT * FROM minit_surat ORDER BY id DESC");
-                if ($res && $res->num_rows > 0) {
-                    while($row = $res->fetch_assoc()) {
-                        $status = trim($row['status'] ?? 'BARU');
-                        
-                        // LOGIK BARU: Selesai jika status tandatangan atau dimaklum
-                        $is_done = (strcasecmp($status, 'SELESAI TANDATANGAN') == 0 || strcasecmp($status, 'DIMAKLUM') == 0);
-                        $badge = $is_done ? 'done' : 'wait';
-                        
-                        echo "<tr>
-                            <td style='font-weight:600; font-family:monospace;'>".htmlspecialchars($row['no_rujukan'])."</td>
-                            <td><i class='fa-solid fa-user-gear'></i> ".htmlspecialchars($row['didaftarkan_oleh'])."</td>
-                            <td>".htmlspecialchars($row['kolej'])."</td>
-                            <td style='max-width: 300px;'>".htmlspecialchars($row['perkara'])."</td>
-                            <td><span class='status-badge $badge'>$status</span></td>
-                            <td>";
-                        
-                        // Paparkan "Lihat" jika sudah selesai, jika tidak paparkan "Sahkan"
+                $stmt = $conn->query("SELECT * FROM minit_surat ORDER BY id DESC");
+                while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $status = htmlspecialchars(trim($row['status'] ?? 'BARU'));
+                    $is_done = (strcasecmp($status, 'SELESAI TANDATANGAN') == 0 || strcasecmp($status, 'DIMAKLUM') == 0);
+                    $badge = $is_done ? 'done' : 'wait';
+                    
+                    echo "<tr>
+                        <td style='font-family:monospace;'>".htmlspecialchars($row['no_rujukan'])."</td>
+                        <td>".htmlspecialchars($row['didaftarkan_oleh'])."</td>
+                        <td>".htmlspecialchars($row['kolej'])."</td>
+                        <td style='max-width:300px;'>".htmlspecialchars($row['perkara'])."</td>
+                        <td><span class='status-badge {$badge}'>{$status}</span></td>
+                        <td>";
                         if ($is_done) {
-                            echo '<a href="view_surat.php?id='.$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
+                            echo '<a href="view_surat.php?id='.(int)$row['id'].'" class="btn-action btn-view"><i class="fa-solid fa-eye"></i> Lihat</a>';
                         } else {
-                            echo '<a href="tandatangan.php?id='.$row['id'].'" class="btn-action btn-sign"><i class="fa-solid fa-pen-nib"></i> Sahkan</a>';
+                            echo '<a href="tandatangan.php?id='.(int)$row['id'].'" class="btn-action btn-sign"><i class="fa-solid fa-pen-nib"></i> Sahkan</a>';
                         }
                         echo "</td></tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='6' style='text-align:center; padding: 30px; color: var(--text-muted);'>📂 Tiada dokumen ditemui.</td></tr>";
                 }
                 ?>
             </tbody>
         </table>
     </div>
 </div>
-
 </body>
 </html>
