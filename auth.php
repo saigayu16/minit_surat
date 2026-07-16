@@ -1,59 +1,29 @@
 <?php
+// 1. Start output buffering to prevent header errors
+ob_start(); 
+
 session_start();
-// Pastikan db.php anda tidak memaparkan sebarang 'echo' atau 'print' sebelum header() dipanggil
-include('db.php'); 
+include('db.php');
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nama_input = $_POST['username'] ?? '';
-    $pass_input = $_POST['password'] ?? '';
-    $role_input = $_POST['role'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Sanitize input
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $password = $_POST['password']; 
+    $role     = $_POST['role'];
 
-    try {
-        // Query mencari user berdasarkan nama dan role
-        $stmt = $conn->prepare("SELECT * FROM users WHERE nama = :nama AND role = :role");
-        $stmt->execute(['nama' => $nama_input, 'role' => $role_input]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Use prepared statements to prevent SQL injection
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? AND role = ?");
+    $stmt->bind_param("ss", $username, $role);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
 
-        // Semak user dan password (teks biasa 12345)
-        if ($user && $pass_input === $user['password']) {
-            
-            // Set Session
-            $_SESSION['user_logged_in'] = true;
-            $_SESSION['user_name'] = $user['nama'];
-            $_SESSION['user_role'] = $user['role'];
-            
-            // Redirect berdasarkan role
-            switch ($user['role']) {
-                case 'admin':
-                    header("Location: homeadmin.php");
-                    break;
-                case 'pengarah':
-                    header("Location: homedirector.php");
-                    break;
-                case 'tpa':
-                    header("Location: hometpa.php");
-                    break;
-                case 'tpp':
-                    header("Location: hometpp.php");
-                    break;
-                default:
-                    header("Location: login.php?error=unknown_role");
-                    break;
-            }
-            exit;
+    // Verify user and password
+    if ($user && $password === $user['password']) {
+        session_regenerate_id(true);
 
-        } else {
-            // Login gagal - Kembali ke login dengan error
-            header("Location: login.php?error=1");
-            exit;
-        }
-
-    } catch (PDOException $e) {
-        // Jika DB gagal, paparkan ralat (hanya untuk tujuan debugging)
-        die("Ralat Pangkalan Data: " . $e->getMessage());
-    }
-} else {
-    header("Location: login.php");
-    exit;
-}
-?>
+        // Set session variables
+        $_SESSION['user_logged_in'] = true;
+        $_SESSION['user_name']      = $user['username'];
+        $_SESSION['user_role']      = $user['role'];
+        $_SESSION['user_email']     = $user['email'];
