@@ -1,9 +1,9 @@
-<?php 
-// Start output buffering to prevent "headers already sent" errors
+<?php
+// Start output buffering
 ob_start();
 
 session_start();
-include('db.php'); 
+include('db.php'); // Pastikan db.php anda menggunakan format PDO
 
 // 1. SEMAK SESI
 if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true) {
@@ -14,17 +14,23 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true)
 // 2. AMBIL NAMA USER
 $user_name = $_SESSION['user_name'] ?? 'Admin Sistem';
 
-// 3. KIRA STATISTIK (DITAMBAH: status 'DIMAKLUM' kini dikira sebagai selesai)
-$count_all = $conn->query("SELECT COUNT(*) as total FROM minit_surat");
-$total_surat = ($count_all) ? $count_all->fetch_assoc()['total'] : 0;
+// 3. KIRA STATISTIK (Menggunakan PDO)
+try {
+    $count_all = $conn->query("SELECT COUNT(*) as total FROM minit_surat")->fetch();
+    $total_surat = $count_all['total'] ?? 0;
 
-// Query untuk 'Menunggu': status selain 'SELESAI TANDATANGAN' dan 'DIMAKLUM'
-$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
-$total_wait = ($count_wait) ? $count_wait->fetch_assoc()['total'] : 0;
+    // Query untuk 'Menunggu'
+    $stmt_wait = $conn->prepare("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
+    $stmt_wait->execute();
+    $total_wait = $stmt_wait->fetch()['total'] ?? 0;
 
-// Query untuk 'Selesai': status 'SELESAI TANDATANGAN' atau 'DIMAKLUM'
-$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
-$total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
+    // Query untuk 'Selesai'
+    $stmt_done = $conn->prepare("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
+    $stmt_done->execute();
+    $total_done = $stmt_done->fetch()['total'] ?? 0;
+} catch (PDOException $e) {
+    $total_surat = $total_wait = $total_done = 0;
+}
 ?>
 
 <!DOCTYPE html>
@@ -63,7 +69,6 @@ $total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
         .done { background: #d1fae5; color: #065f46; }
         .selesai-badge { background: #e0e7ff; color: #4338ca; }
         
-        /* Butang */
         .btn-view { display: inline-block; padding: 6px 12px; background: #e0e7ff; color: #4338ca; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; }
         .btn-print { display: inline-block; padding: 6px 12px; background: #dcfce7; color: #166534; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; }
         .btn-daftar { background: #059669; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: background 0.3s; }
@@ -98,10 +103,10 @@ $total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
             </thead>
             <tbody>
                 <?php
+                // Menukar query ke PDO
                 $res = $conn->query("SELECT * FROM minit_surat ORDER BY id DESC");
-                while($row = $res->fetch_assoc()) {
+                while($row = $res->fetch(PDO::FETCH_ASSOC)) {
                     $status = trim($row['status'] ?? 'Menunggu');
-                    // Logik badge warna
                     $badge = ($status == 'SELESAI TANDATANGAN' || $status == 'DIMAKLUM') ? 'selesai-badge' : 'wait';
                     
                     echo "<tr>
@@ -113,7 +118,7 @@ $total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
                             <a href='view_surat.php?id={$row['id']}' class='btn-view'><i class='fa-solid fa-eye'></i> Lihat</a><br>
                             <a href='cetak_minit.php?id={$row['id']}' target='_blank' class='btn-print'><i class='fa-solid fa-print'></i> Cetak</a>
                         </td>
-                        <td>" . (!empty($row['maklum_kepada']) ? "<span style='color:#0369a1; font-weight:bold;'>".$row['maklum_kepada']."</span>" : "<a href='maklum.php?id={$row['id']}' style='color:#7c3aed; text-decoration:none;'><i class='fa-solid fa-paper-plane'></i> Maklum</a>") . "</td>
+                        <td>" . (!empty($row['maklum_kepada']) ? "<span style='color:#0369a1; font-weight:bold;'>".htmlspecialchars($row['maklum_kepada'])."</span>" : "<a href='maklum.php?id={$row['id']}' style='color:#7c3aed; text-decoration:none;'><i class='fa-solid fa-paper-plane'></i> Maklum</a>") . "</td>
                     </tr>";
                 }
                 ?>
