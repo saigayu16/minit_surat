@@ -4,7 +4,7 @@ $api_key = getenv('BREVO_API_KEY');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $surat_id    = $_POST['surat_id'];
-    $nama_staf   = $_POST['nama_staf'];
+    $nama_staf   = $_POST['nama_staff'];
     $email_staf  = $_POST['email'];
 
     // 1. Semak emel dalam database (Pastikan staf wujud)
@@ -36,9 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $response = curl_exec($ch);
         curl_close($ch);
 
-        echo "<script>alert('E-mel berjaya dihantar kepada $nama_staf!'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('E-mel berjaya dihantar kepada $nama_staff!'); window.location='homeadmin.php';</script>";
     } else {
-        echo "<script>alert('Ralat: Emel staf tidak ditemui dalam sistem!'); window.history.back();</script>";
+        echo "<script>alert('Ralat: Emel staff tidak ditemui dalam sistem!'); window.history.back();</script>";
     }
 }
 ?>
