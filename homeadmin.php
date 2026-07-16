@@ -1,9 +1,8 @@
-<?php
-// Start output buffering
+<?php 
+// Start output buffering to prevent "headers already sent" errors
 ob_start();
-session_start();
 
-// Panggil fail sambungan DB
+session_start();
 include('db.php'); 
 
 // 1. SEMAK SESI
@@ -12,23 +11,20 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true)
     exit;
 }
 
-// 2. AMBIL NAMA DAN ROLE USER DARI SESI
-$user_name = $_SESSION['user_name'] ?? 'Admin';
-$user_role = $_SESSION['user_role'] ?? 'admin'; 
+// 2. AMBIL NAMA USER
+$user_name = $_SESSION['user_name'] ?? 'Admin Sistem';
 
-// 3. KIRA STATISTIK (Menggunakan PDO)
-try {
-    $count_all = $conn->query("SELECT COUNT(*) FROM minit_surat");
-    $total_surat = $count_all->fetchColumn();
+// 3. KIRA STATISTIK (DITAMBAH: status 'DIMAKLUM' kini dikira sebagai selesai)
+$count_all = $conn->query("SELECT COUNT(*) as total FROM minit_surat");
+$total_surat = ($count_all) ? $count_all->fetch_assoc()['total'] : 0;
 
-    $stmt_wait = $conn->query("SELECT COUNT(*) FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
-    $total_wait = $stmt_wait->fetchColumn();
+// Query untuk 'Menunggu': status selain 'SELESAI TANDATANGAN' dan 'DIMAKLUM'
+$count_wait = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status != 'SELESAI TANDATANGAN' AND status != 'DIMAKLUM'");
+$total_wait = ($count_wait) ? $count_wait->fetch_assoc()['total'] : 0;
 
-    $stmt_done = $conn->query("SELECT COUNT(*) FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
-    $total_done = $stmt_done->fetchColumn();
-} catch (PDOException $e) {
-    $total_surat = $total_wait = $total_done = 0;
-}
+// Query untuk 'Selesai': status 'SELESAI TANDATANGAN' atau 'DIMAKLUM'
+$count_done = $conn->query("SELECT COUNT(*) as total FROM minit_surat WHERE status = 'SELESAI TANDATANGAN' OR status = 'DIMAKLUM'");
+$total_done = ($count_done) ? $count_done->fetch_assoc()['total'] : 0;
 ?>
 
 <!DOCTYPE html>
@@ -44,6 +40,7 @@ try {
         :root {
             --primary-color: #1e293b;
             --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
             --card-bg: #ffffff;
             --text-main: #ffffff;
             --text-muted: #64748b;
@@ -63,8 +60,10 @@ try {
         td { padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; color: #334155; }
         .status-badge { padding: 6px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
         .wait { background: #fee2e2; color: #991b1b; }
+        .done { background: #d1fae5; color: #065f46; }
         .selesai-badge { background: #e0e7ff; color: #4338ca; }
         
+        /* Butang */
         .btn-view { display: inline-block; padding: 6px 12px; background: #e0e7ff; color: #4338ca; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; }
         .btn-print { display: inline-block; padding: 6px 12px; background: #dcfce7; color: #166534; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; }
         .btn-daftar { background: #059669; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: background 0.3s; }
@@ -77,7 +76,7 @@ try {
 <nav class="navbar">
     <h2><i class="fa-solid fa-folder-open"></i> Sistem Minit Digital</h2>
     <div class="header-actions">
-        <span><?= htmlspecialchars($user_name) ?> (Role: <?= htmlspecialchars($user_role) ?>)</span>
+        <span><?= htmlspecialchars($user_name) ?></span>
         <a href="daftar_surat.php" class="btn-daftar"><i class="fa-solid fa-plus"></i> Daftar Surat Masuk</a>
         <a href="logout.php" style="color:#f87171; text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Log Keluar</a>
     </div>
@@ -100,8 +99,9 @@ try {
             <tbody>
                 <?php
                 $res = $conn->query("SELECT * FROM minit_surat ORDER BY id DESC");
-                while($row = $res->fetch(PDO::FETCH_ASSOC)) {
+                while($row = $res->fetch_assoc()) {
                     $status = trim($row['status'] ?? 'Menunggu');
+                    // Logik badge warna
                     $badge = ($status == 'SELESAI TANDATANGAN' || $status == 'DIMAKLUM') ? 'selesai-badge' : 'wait';
                     
                     echo "<tr>
@@ -113,7 +113,7 @@ try {
                             <a href='view_surat.php?id={$row['id']}' class='btn-view'><i class='fa-solid fa-eye'></i> Lihat</a><br>
                             <a href='cetak_minit.php?id={$row['id']}' target='_blank' class='btn-print'><i class='fa-solid fa-print'></i> Cetak</a>
                         </td>
-                        <td>" . (!empty($row['maklum_kepada']) ? "<span style='color:#0369a1; font-weight:bold;'>".htmlspecialchars($row['maklum_kepada'])."</span>" : "<a href='maklum.php?id={$row['id']}' style='color:#7c3aed; text-decoration:none;'><i class='fa-solid fa-paper-plane'></i> Maklum</a>") . "</td>
+                        <td>" . (!empty($row['maklum_kepada']) ? "<span style='color:#0369a1; font-weight:bold;'>".$row['maklum_kepada']."</span>" : "<a href='maklum.php?id={$row['id']}' style='color:#7c3aed; text-decoration:none;'><i class='fa-solid fa-paper-plane'></i> Maklum</a>") . "</td>
                     </tr>";
                 }
                 ?>
