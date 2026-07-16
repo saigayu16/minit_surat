@@ -1,38 +1,36 @@
 <?php
-// mailer.php
-// Jika anda tidak menggunakan library rasmi Brevo, buang baris 'require_once' ini
-// require_once __DIR__ . '/vendor/autoload.php'; 
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Brevo\Client\Api\TransactionalEmailsApi;
+use Brevo\Client\Configuration;
+use Brevo\Client\Model\SendSmtpEmail;
+use GuzzleHttp\Client;
 
 function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64 = null, $file_name = null) {
     $api_key = getenv('BREVO_API_KEY');
     
+    $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', $api_key);
+    $apiInstance = new TransactionalEmailsApi(new Client(), $config);
+
     $data = [
-        "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
-        "to" => [["email" => $to_email, "name" => $to_name]],
-        "subject" => $subject,
-        "htmlContent" => $content
+        'sender' => ['email' => 'saigayu1605@gmail.com', 'name' => 'Sistem Minit Digital'],
+        'to' => [['email' => $to_email, 'name' => $to_name]],
+        'subject' => $subject,
+        'htmlContent' => $content
     ];
 
     if ($attachment_base64 && $file_name) {
-        $data["attachment"] = [["content" => $attachment_base64, "name" => $file_name]];
+        $data['attachment'] = [['content' => $attachment_base64, 'name' => $file_name]];
     }
 
-    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
-    
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    $sendSmtpEmail = new SendSmtpEmail($data);
 
-    // DEBUG: Jika gagal, simpan ralat ke dalam log pelayan
-    if ($http_code !== 201 && $http_code !== 200) {
-        error_log("Brevo API Gagal (HTTP $http_code): " . $response);
+    try {
+        $apiInstance->sendTransacEmail($sendSmtpEmail);
+        return true;
+    } catch (Exception $e) {
+        error_log('Brevo API Error: ' . $e->getMessage());
         return false;
     }
-
-    return true;
 }
 ?>
