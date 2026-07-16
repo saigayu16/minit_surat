@@ -2,28 +2,30 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 session_start();
-include('db.php');
+include('db.php'); 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil input
-    $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan']);
-    $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima']);
-    $daripada = mysqli_real_escape_string($conn, $_POST['daripada']);
-    $perkara = mysqli_real_escape_string($conn, $_POST['perkara']);
-    $kolej = mysqli_real_escape_string($conn, $_POST['kolej']);
-    $target_role = mysqli_real_escape_string($conn, $_POST['target_role']);
+    // 1. Ambil input terus (PDO tidak perlukan mysqli_real_escape_string)
+    $no_rujukan    = $_POST['no_rujukan'] ?? '';
+    $tarikh_terima = $_POST['tarikh_terima'] ?? '';
+    $daripada      = $_POST['daripada'] ?? '';
+    $perkara       = $_POST['perkara'] ?? '';
+    $kolej         = $_POST['kolej'] ?? '';
+    $target_role   = $_POST['target_role'] ?? '';
     
-    // 2. Dapatkan Emel Penerima
+    // 2. Dapatkan Emel Penerima (Guna PDO)
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
-    $stmt_email->bind_param("s", $target_role);
-    $stmt_email->execute();
-    $result = $stmt_email->get_result();
-    $email_penerima = ($result->num_rows > 0) ? $result->fetch_assoc()['email'] : null;
+    $stmt_email->execute([$target_role]);
+    $user = $stmt_email->fetch(PDO::FETCH_ASSOC);
+    $email_penerima = $user ? $user['email'] : null;
     
     if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
 
     // 3. Proses Fail ke Google Drive
     $drive_file_id = "GAGAL_UPLOAD";
+    $base64_file = "";
+    $file_name = "";
+
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_name = $_FILES['fail_surat']['name'];
         $base64_file = base64_encode(file_get_contents($_FILES['fail_surat']['tmp_name']));
@@ -35,15 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         curl_setopt($ch_drive, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch_drive, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         $drive_response = trim(curl_exec($ch_drive));
-        $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
 
-        if ($http_code_drive == 200) {
-            $drive_file_id = $drive_response;
-        }
+        $drive_file_id = $drive_response ?: "GAGAL_UPLOAD";
     }
 
-    // 4. Integrasi API Brevo (E-mel) - Tidak lagi menyekat proses jika gagal
+    // 4. Integrasi API Brevo
     $api_key = getenv('BREVO_API_KEY');
     $data = [
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
@@ -61,14 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     curl_exec($ch);
     curl_close($ch);
 
-    // 5. Simpan ke Database (Langkah Akhir)
-    $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
-    $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
+    // 5. Simpan ke Database (Gunakan PDO Prepared Statement)
+    $sql = "INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) 
+            VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)";
+    $stmt = $conn->prepare($sql);
     
-    if ($stmt->execute()) {
-        echo "<script>alert('Surat telah didaftarkan! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
+    if ($stmt->execute([$no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id])) {
+        echo "<script>alert('Surat telah didaftarkan!'); window.location='homeadmin.php';</script>";
     } else {
-        echo "Ralat Database: " . $stmt->error;
+        echo "Ralat Database: " . implode(" ", $stmt->errorInfo());
     }
 }
 ?>
