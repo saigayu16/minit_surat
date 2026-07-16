@@ -11,8 +11,8 @@
     
     <style>
         :root {
-            --primary-color: #0f172a; /* Gelap Eksekutif */
-            --accent-color: #2563eb; /* Biru Korporat */
+            --primary-color: #0f172a;
+            --accent-color: #2563eb;
             --bg-color: #f8fafc;
             --card-bg: #cad0e4;
             --text-main: #1e293b;
@@ -22,7 +22,6 @@
 
         body { 
             font-family: 'Inter', sans-serif; 
-            /* Menggunakan imej latar belakang dengan lapisan overlay gelap */
             background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('backgroundkkkb.jpg'); 
             background-repeat: no-repeat;
             background-size: cover;
@@ -35,7 +34,6 @@
             min-height: 100vh;
         }
 
-        /* Navbar Bersih Tanpa Logo */
         .navbar { 
             background: var(--primary-color); 
             color: white; 
@@ -53,7 +51,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Ruangan Utama */
         .main-welcome {
             flex: 1;
             display: flex;
@@ -64,16 +61,12 @@
             text-align: center;
         }
 
-        /* Ruangan Logo Atas Selamat Datang */
         .logo-container-center {
             margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         .logo-kolej-besar {
-            height: 100px; /* Saiz logo yang lebih ideal untuk paparan tengah */     
+            height: 100px;
         }
 
         .welcome-title {
@@ -93,7 +86,6 @@
             line-height: 1.6;
         }
 
-        /* Grid Pilihan */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -102,7 +94,6 @@
             max-width: 750px;
         }
 
-        /* Kad Gaya Premium */
         .option-card {
             background: var(--card-bg);
             padding: 40px 30px;
@@ -172,7 +163,7 @@
     <p class="welcome-subtitle">Sila klik mana-mana modul tugasan di bawah untuk ke halaman log masuk.</p>
 
     <div class="options-grid">
-        <a href="homeadmin.php" class="option-card">
+        <a href="login.php" class="option-card" aria-label="Modul Masukkan Surat">
             <div class="option-icon icon-surat">
                 <i class="fa-solid fa-envelope-open-text"></i>
             </div>
@@ -180,7 +171,7 @@
             <p>Daftar maklumat surat masuk dan rujukan rasmi ke dalam sistem digital.</p>
         </a>
 
-        <a href="homeadmin.php" class="option-card">
+        <a href="login.php" class="option-card" aria-label="Modul Sahkan Borang">
             <div class="option-icon icon-borang">
                 <i class="fa-solid fa-file-signature"></i>
             </div>
