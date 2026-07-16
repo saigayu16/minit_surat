@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
 
-    // 3. Proses Fail
+    // 3. Proses Fail ke Google Drive
     $drive_file_id = "GAGAL_UPLOAD";
     $base64_file = "";
     $file_name = "";
@@ -42,26 +42,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // 4. Simpan ke Database
-    // PENTING: PostgreSQL biasanya memerlukan 'DEFAULT' atau membiarkan ia kosong.
-    // Jika ia masih NULL, kita kena masukkan ia secara eksplisit menggunakan NEXTVAL.
-    
-    $sql = "INSERT INTO minit_surat (id, no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) 
-            VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, 'BARU', ?)";
+    // Kita tidak masukkan 'id' kerana ia akan dijana automatik oleh database
+    $sql = "INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) 
+            VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)";
     
     $stmt = $conn->prepare($sql);
     
     if ($stmt->execute([$no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id])) {
         echo "<script>alert('Surat telah didaftarkan!'); window.location='homeadmin.php';</script>";
     } else {
-        // Jika DEFAULT gagal, mungkin tiada sequence, kita cuba tanpa 'id' sama sekali
-        $sql_alt = "INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) 
-                    VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)";
-        $stmt_alt = $conn->prepare($sql_alt);
-        if ($stmt_alt->execute([$no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id])) {
-            echo "<script>alert('Surat telah didaftarkan!'); window.location='homeadmin.php';</script>";
-        } else {
-            echo "Ralat Database: " . $stmt_alt->errorInfo()[2];
-        }
+        $error = $stmt->errorInfo();
+        echo "Ralat Database: " . $error[2];
     }
 }
 ?>
