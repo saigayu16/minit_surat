@@ -3,14 +3,13 @@ FROM php:8.1-apache
 # 1. Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# 2. Update and install required system libraries
+# 2. Update and install required system libraries untuk PostgreSQL
 RUN apt-get update && apt-get install -y \
-    libmariadb-dev-compat \
-    libmariadb-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Install and configure mysqli specifically
-RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
+# 3. Install dan enable pdo_pgsql (untuk PostgreSQL/Neon)
+RUN docker-php-ext-install pdo pdo_pgsql
 
 # 4. Copy your project files
 COPY . /var/www/html/
