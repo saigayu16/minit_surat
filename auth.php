@@ -1,62 +1,59 @@
 <?php
 session_start();
-include('db.php'); // Pastikan db.php menggunakan PDO
+include('db.php'); // Pastikan fail ini mengandungi sambungan PDO ke Neon
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username_input = $_POST['username'] ?? '';
-    $password_input = $_POST['password'] ?? '';
-    $role_input     = $_POST['role'] ?? '';
+    // 1. Ambil input dari form
+    $nama_input = $_POST['username'] ?? '';
+    $pass_input = $_POST['password'] ?? '';
+    $role_input = $_POST['role'] ?? '';
 
     try {
-        // Menggunakan nama lajur 'nama' berdasarkan DBeaver anda
+        // 2. Query menggunakan PDO - pastikan nama lajur 'nama' (seperti dalam DBeaver anda)
         $stmt = $conn->prepare("SELECT * FROM users WHERE nama = :nama AND role = :role");
-        $stmt->execute([
-            'nama' => $username_input, 
-            'role' => $role_input
-        ]);
-        
+        $stmt->execute(['nama' => $nama_input, 'role' => $role_input]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Semakan log masuk (Menggunakan perbandingan teks biasa kerana data anda '12345')
-        if ($user && $password_input === $user['password']) {
+        // 3. Semak jika user wujud dan password betul (dalam DBeaver anda, password adalah teks biasa '12345')
+        if ($user && $pass_input === $user['password']) {
             
-            // Set session
+            // 4. Set Session
             $_SESSION['user_logged_in'] = true;
-            $_SESSION['user_name']      = $user['nama'];
-            $_SESSION['user_role']      = $user['role'];
+            $_SESSION['user_name'] = $user['nama'];
+            $_SESSION['user_role'] = $user['role'];
             
-            // Redirect mengikut peranan
+            // 5. Redirect berdasarkan role
             switch ($user['role']) {
-                case 'admin': 
-                    header("Location: homeadmin.php"); 
+                case 'admin':
+                    header("Location: homeadmin.php");
                     break;
-                case 'pengarah': 
-                    header("Location: homedirector.php"); 
+                case 'pengarah':
+                    header("Location: homedirector.php");
                     break;
-                case 'tpp': 
-                    header("Location: hometpp.php"); 
+                case 'tpa':
+                    header("Location: hometpa.php");
                     break;
-                case 'tpa': 
-                    header("Location: hometpa.php"); 
+                case 'tpp':
+                    header("Location: hometpp.php");
                     break;
-                default: 
-                    header("Location: login.php"); 
+                default:
+                    header("Location: login.php?error=unknown_role");
                     break;
             }
-            exit;
-            
+            exit; // Penting untuk menghentikan skrip selepas redirect
+
         } else {
-            // Login gagal
+            // Log masuk gagal
             header("Location: login.php?error=1");
             exit;
         }
 
     } catch (PDOException $e) {
-        // Jika ada ralat database, paparkan mesej (boleh dibuang untuk produksi)
-        die("Ralat sistem: " . $e->getMessage());
+        // Paparkan ralat jika ada masalah sambungan ke Neon
+        die("Ralat Pangkalan Data: " . $e->getMessage());
     }
 } else {
-    // Jika akses direct ke auth.php tanpa POST
+    // Jika akses terus ke fail auth.php, hantar ke login
     header("Location: login.php");
     exit;
 }
