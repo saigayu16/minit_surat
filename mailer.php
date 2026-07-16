@@ -1,5 +1,7 @@
 <?php
-// mailer.php (Versi cURL - Tidak perlukan library luar)
+// mailer.php
+require_once __DIR__ . '/vendor/autoload.php';
+
 function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64 = null, $file_name = null) {
     $api_key = getenv('BREVO_API_KEY');
     
@@ -10,6 +12,7 @@ function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64
         "htmlContent" => $content
     ];
 
+    // Jika ada lampiran (attachment), tambah ke dalam data
     if ($attachment_base64 && $file_name) {
         $data["attachment"] = [["content" => $attachment_base64, "name" => $file_name]];
     }
@@ -18,15 +21,13 @@ function hantarEmail($to_email, $to_name, $subject, $content, $attachment_base64
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'api-key: ' . $api_key,
-        'Content-Type: application/json'
-    ]);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
     
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    return ($http_code == 200 || $http_code == 201);
+    // Return true jika berjaya (HTTP 201 Created)
+    return ($http_code == 201);
 }
 ?>
