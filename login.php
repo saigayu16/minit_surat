@@ -17,11 +17,6 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
 }
 ?>
 
-<!-- 2. ADD THIS RIGHT HERE: Error handling snippet -->
-<?php if(isset($_GET['error'])): ?>
-    <script>alert('Nama pengguna, kata laluan, atau peranan salah!');</script>
-<?php endif; ?>
-
 <!DOCTYPE html>
 <html lang="ms">
 <head>
@@ -64,6 +59,15 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
     </style>
 </head>
 <body>
+    
+    <?php if(isset($_GET['error'])): ?>
+        <script>
+            window.onload = function() {
+                alert('Nama pengguna, kata laluan, atau peranan salah!');
+            };
+        </script>
+    <?php endif; ?>
+
     <div class="login-card">
         <div class="logo-container">
             <img src="logokkkb.png" alt="Logo Kolej" class="logo-kolej">
