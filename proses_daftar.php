@@ -1,14 +1,12 @@
 <?php
 session_start();
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Panggil fail sambungan DB (Pastikan db.php guna PDO)
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil input (Tidak perlu escape_string dengan PDO)
+    // 1. Ambil input
     $no_rujukan = $_POST['no_rujukan'];
     $tarikh_terima = $_POST['tarikh_terima'];
     $daripada = $_POST['daripada'];
@@ -16,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $kolej = $_POST['kolej'];
     $target_role = $_POST['target_role'];
     
-    // 2. Dapatkan Emel Penerima (Guna PDO)
+    // 2. Dapatkan Emel Penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
     $stmt_email->execute([$target_role]);
     $user_data = $stmt_email->fetch(PDO::FETCH_ASSOC);
@@ -24,9 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
 
-    // 3. Proses Fail ke Google Drive
+    // 3. Proses Fail
     $drive_file_id = "GAGAL_UPLOAD";
-    $base64_file = ""; // Definisi awal
+    $base64_file = "";
     $file_name = "";
 
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
@@ -37,41 +35,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $ch_drive = curl_init("https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec");
         curl_setopt($ch_drive, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch_drive, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch_drive, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch_drive, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         $drive_response = trim(curl_exec($ch_drive));
         curl_close($ch_drive);
-
         $drive_file_id = $drive_response;
     }
 
-    // 4. Integrasi API Brevo
-    $api_key = getenv('BREVO_API_KEY');
-    $data = [
-        "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
-        "to" => [["email" => $email_penerima]],
-        "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda.",
-        "attachment" => [["content" => $base64_file, "name" => $file_name]]
-    ];
-
-    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
-    curl_exec($ch);
-    curl_close($ch);
-
-    // 5. Simpan ke Database (Guna PDO prepare & execute)
-    $sql = "INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) 
-            VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)";
+    // 4. Simpan ke Database
+    // PENTING: PostgreSQL biasanya memerlukan 'DEFAULT' atau membiarkan ia kosong.
+    // Jika ia masih NULL, kita kena masukkan ia secara eksplisit menggunakan NEXTVAL.
+    
+    $sql = "INSERT INTO minit_surat (id, no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) 
+            VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, 'BARU', ?)";
+    
     $stmt = $conn->prepare($sql);
     
     if ($stmt->execute([$no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id])) {
         echo "<script>alert('Surat telah didaftarkan!'); window.location='homeadmin.php';</script>";
     } else {
-        echo "Ralat Database: " . $stmt->errorInfo()[2];
+        // Jika DEFAULT gagal, mungkin tiada sequence, kita cuba tanpa 'id' sama sekali
+        $sql_alt = "INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) 
+                    VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)";
+        $stmt_alt = $conn->prepare($sql_alt);
+        if ($stmt_alt->execute([$no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id])) {
+            echo "<script>alert('Surat telah didaftarkan!'); window.location='homeadmin.php';</script>";
+        } else {
+            echo "Ralat Database: " . $stmt_alt->errorInfo()[2];
+        }
     }
 }
 ?>
