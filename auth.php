@@ -27,3 +27,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['user_name']      = $user['username'];
         $_SESSION['user_role']      = $user['role'];
         $_SESSION['user_email']     = $user['email'];
+
+        // Redirect based on role
+        switch ($role) {
+            case 'admin':
+                header("Location: homeadmin.php");
+                break;
+            case 'pengarah':
+                header("Location: homedirector.php");
+                break;
+            case 'tpp':
+                header("Location: hometpp.php");
+                break;
+            case 'tpa':
+                header("Location: hometpa.php");
+                break;
+            default:
+                header("Location: login.php");
+                break;
+        }
+        exit(); // Always exit after header redirect
+    } else {
+        // Redirect with error instead of using echo/alert
+        header("Location: login.php?error=1");
+        exit();
+    }
+} else {
+    // Access denied if not POST
+    header("Location: login.php");
+    exit();
+}
+// End output buffering
+ob_end_flush(); 
+?>
