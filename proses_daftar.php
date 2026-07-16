@@ -2,16 +2,16 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 session_start();
-include('db.php'); // Pastikan db.php menggunakan 'new mysqli(...)'
+include('db.php'); 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // 1. Ambil input
-    $no_rujukan = $_POST['no_rujukan'];
+    $no_rujukan    = $_POST['no_rujukan'];
     $tarikh_terima = $_POST['tarikh_terima'];
-    $daripada = $_POST['daripada'];
-    $perkara = $_POST['perkara'];
-    $kolej = $_POST['kolej'];
-    $target_role = $_POST['target_role'];
+    $daripada      = $_POST['daripada'];
+    $perkara       = $_POST['perkara'];
+    $kolej         = $_POST['kolej'];
+    $target_role   = $_POST['target_role'];
     
     // 2. Dapatkan Emel Penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
@@ -36,18 +36,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $ch_drive = curl_init("https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec");
         curl_setopt($ch_drive, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch_drive, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch_drive, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch_drive, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        
         $drive_response = trim(curl_exec($ch_drive));
+        $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
-        $drive_file_id = $drive_response;
+
+        // Hanya simpan jika Google Script berjaya (HTTP 200) dan response pendek
+        if ($http_code_drive == 200 && strlen($drive_response) < 200) {
+            $drive_file_id = $drive_response;
+        }
     }
 
-    // 4. Simpan ke Database (MySQLi)
+    // 4. Simpan ke Database
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
     $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
     
     if ($stmt->execute()) {
-        // 5. Integrasi API Brevo
+        
+        // 5. Integrasi API Brevo (Hantar E-mel)
         $api_key = getenv('BREVO_API_KEY');
         $data = [
             "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
