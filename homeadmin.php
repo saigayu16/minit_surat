@@ -13,7 +13,8 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true)
 }
 
 // 2. AMBIL NAMA USER
-$user_name = $_SESSION['user_name'] ?? 'Admin Sistem';
+$user_name = $_SESSION['user_name'] ?? 'Admin';
+$user_role = "Admin";
 
 // 3. KIRA STATISTIK (Menggunakan PDO)
 try {
