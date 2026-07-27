@@ -31,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
-        // Pastikan fail ada sebelum hantar
+        // Pastikan fail ada sebelum meneruskan penghantaran
         if (!$base64) {
-            die("Ralat: Sila pilih fail dokumen minit yang sah.");
+            die("Ralat: Sila pastikan anda telah memilih fail dokumen minit yang sah dan borang mempunyai atribut enctype='multipart/form-data'.");
         }
 
         // 3. Panggil fungsi hantarEmail dari mailer.php
