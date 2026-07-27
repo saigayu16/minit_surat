@@ -22,8 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
 
-    // 3. Proses Fail ke Google Drive
+    // Initialize file variables
     $drive_file_id = "GAGAL_UPLOAD";
+    $base64_file = null;
+    $file_name = null;
+
+    // 3. Proses Fail ke Google Drive
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_name = $_FILES['fail_surat']['name'];
         $base64_file = base64_encode(file_get_contents($_FILES['fail_surat']['tmp_name']));
@@ -43,15 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // 4. Integrasi API Brevo (E-mel) - Tidak lagi menyekat proses jika gagal
+    // 4. Integrasi API Brevo (E-mel)
     $api_key = getenv('BREVO_API_KEY');
     $data = [
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
         "to" => [["email" => $email_penerima]],
         "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda.",
-        "attachment" => [["content" => $base64_file, "name" => $file_name]]
+        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda."
     ];
+
+    // Hanya masukkan attachment jika fail berjaya diproses
+    if ($base64_file && $file_name) {
+        $data["attachment"] = [["content" => $base64_file, "name" => $file_name]];
+    }
 
     $ch = curl_init('https://api.brevo.com/v3/smtp/email');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
