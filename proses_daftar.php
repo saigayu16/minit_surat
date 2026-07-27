@@ -27,13 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $base64_file = null;
     $file_name = null;
 
-    // 3. Proses Fail ke Google Drive & Sediakan Data untuk Emel
+    // 3. Proses Fail ke Google Drive
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_name = $_FILES['fail_surat']['name'];
         $base64_file = base64_encode(file_get_contents($_FILES['fail_surat']['tmp_name']));
         $payload = json_encode(['fileData' => $base64_file, 'mimeType' => 'application/pdf', 'fileName' => $file_name]);
         
-        // Gantikan URL di bawah dengan URL Web App Google Apps Script anda yang terbaru
         $ch_drive = curl_init("https://script.google.com/macros/s/AKfycbyrdRJFIC8-56GxTjdpTjxRPEQjedujHE2OeirOuYr_74YUb9IZnXLNgAnm7oiHpa9i/exec");
         curl_setopt($ch_drive, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch_drive, CURLOPT_RETURNTRANSFER, true);
@@ -43,27 +42,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
 
-        // Jika respons berjaya dan tiada perkataan ERROR
+        // Jika anda mahu debug respons sebenar dari Google, nyah-komen (remove //) 3 baris di bawah:
+        // echo "HTTP: $http_code_drive | Response: $drive_response"; exit;
+
         if ($http_code_drive == 200 && strpos($drive_response, 'ERROR') === false) {
-            $drive_file_id = $drive_response; // Ini akan menyimpan ID fail Google Drive yang sebenar
+            $drive_file_id = $drive_response;
         }
     }
 
-    // 4. Integrasi API Brevo (E-mel berserta Lampiran PDF)
+    // 4. Integrasi API Brevo (E-mel)
     $api_key = getenv('BREVO_API_KEY');
     $data = [
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
         "to" => [["email" => $email_penerima]],
         "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda.<br><br>No Rujukan: $no_rujukan<br>Perkara: $perkara"
+        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda."
     ];
 
-    // Sertakan lampiran fail ke dalam emel jika fail wujud
+    // Sertakan lampiran hanya jika fail wujud dan sah
     if ($base64_file && $file_name) {
-        $data["attachment"] = [[
-            "content" => $base64_file, 
-            "name" => $file_name
-        ]];
+        $data["attachment"] = [["content" => $base64_file, "name" => $file_name]];
     }
 
     $ch = curl_init('https://api.brevo.com/v3/smtp/email');
@@ -74,12 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     curl_exec($ch);
     curl_close($ch);
 
-    // 5. Simpan ke Database (Termasuk Google Drive File ID)
+    // 5. Simpan ke Database
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
     $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
     
     if ($stmt->execute()) {
-        echo "<script>alert('Surat berjaya didaftarkan! Fail masuk ke Google Drive & E-mel berjaya dihantar. (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('Surat telah didaftarkan! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
     } else {
         echo "Ralat Database: " . $stmt->error;
     }
