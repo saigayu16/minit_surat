@@ -22,12 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
 
-    // Tetapkan nilai awal
-    $drive_file_id = "GAGAL_UPLOAD";
-    $base64_file = null;
-    $file_name = null;
-
     // 3. Proses Fail ke Google Drive
+    $drive_file_id = "GAGAL_UPLOAD";
     if (isset($_FILES['fail_surat']) && $_FILES['fail_surat']['error'] == 0) {
         $file_name = $_FILES['fail_surat']['name'];
         $base64_file = base64_encode(file_get_contents($_FILES['fail_surat']['tmp_name']));
@@ -47,19 +43,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // 4. Integrasi API Brevo (E-mel)
+    // 4. Integrasi API Brevo (E-mel) - Tidak lagi menyekat proses jika gagal
     $api_key = getenv('BREVO_API_KEY');
     $data = [
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
         "to" => [["email" => $email_penerima]],
         "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda."
+        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda.",
+        "attachment" => [["content" => $base64_file, "name" => $file_name]]
     ];
-
-    // Sertakan lampiran hanya jika fail wujud
-    if ($base64_file && $file_name) {
-        $data["attachment"] = [["content" => $base64_file, "name" => $file_name]];
-    }
 
     $ch = curl_init('https://api.brevo.com/v3/smtp/email');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -69,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     curl_exec($ch);
     curl_close($ch);
 
-    // 5. Simpan ke Database
+    // 5. Simpan ke Database (Langkah Akhir)
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
     $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
     
