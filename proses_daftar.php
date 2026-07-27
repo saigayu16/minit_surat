@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $base64_file = base64_encode(file_get_contents($_FILES['fail_surat']['tmp_name']));
         $payload = json_encode(['fileData' => $base64_file, 'mimeType' => 'application/pdf', 'fileName' => $file_name]);
         
-        $ch_drive = curl_init("https://script.google.com/macros/s/AKfycbyzLXkuCO7HCif_ESNPv8a96qwdW9v9zPCUSICJ9CKm_uPnAYStDBGgncZEsoGNQDEY/exec");
+        $ch_drive = curl_init("https://script.google.com/macros/s/AKfycbyrdRJFIC8-56GxTjdpTjxRPEQjedujHE2OeirOuYr_74YUb9IZnXLNgAnm7oiHpa9i/exec");
         curl_setopt($ch_drive, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch_drive, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch_drive, CURLOPT_FOLLOWLOCATION, true);
