@@ -1,5 +1,7 @@
-
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+session_start();
 include('db.php');
 include('mailer.php'); // Panggil fail mailer anda
 
@@ -16,9 +18,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($result->num_rows > 0) {
         $staf = $result->fetch_assoc();
         
-        // 2. Sediakan fail
-        $file_name = $_FILES['dokumen_minit']['name'];
-        $base64 = base64_encode(file_get_contents($_FILES['dokumen_minit']['tmp_name']));
+        $base64 = null;
+        $file_name = null;
+
+        // 2. Semak keselamatan fail (elakkan ralat path kosong)
+        if (isset($_FILES['dokumen_minit']) && $_FILES['dokumen_minit']['error'] == 0) {
+            $file_name = $_FILES['dokumen_minit']['name'];
+            $tmp_name = $_FILES['dokumen_minit']['tmp_name'];
+            
+            if (!empty($tmp_name) && file_exists($tmp_name)) {
+                $base64 = base64_encode(file_get_contents($tmp_name));
+            }
+        }
+
+        // Jika fail gagal dikesan, berikan amaran jelas
+        if (!$base64) {
+            die("Ralat: Fail dokumen minit tidak diterima. Pastikan borang HTML anda mempunyai <b>enctype='multipart/form-data'</b> dan fail telah dipilih.");
+        }
 
         // 3. Panggil fungsi hantarEmail dari mailer.php
         $berjaya = hantarEmail(
