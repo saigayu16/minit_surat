@@ -24,7 +24,6 @@ $arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'TIADA ARAHAN');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 $signature_data = $row['tandatangan']; 
 
-// Baca ID dari kolum drive_file_id
 $drive_file_id = trim($row['drive_file_id'] ?? ''); 
 ?>
 
@@ -37,37 +36,37 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
     <style>
         body { 
             margin: 0; padding: 20px; 
-            background-image: url('daftarsurat.jpg');
-            background-size: cover; 
-            background-position: center; 
-            background-attachment: fixed; 
-            background-repeat: no-repeat;
+            background: #cbd5e1;
             font-family: 'Segoe UI', sans-serif; 
         }
         
-        .page-box { 
-            background: rgba(255, 255, 255, 0.98); 
-            width: 210mm; margin: 0 auto 30px auto; padding: 25mm; 
-            border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            min-height: 297mm; position: relative; box-sizing: border-box;
-            page-break-after: always; 
+        /* Kontena utama gabungan satu dokumen panjang */
+        .document-container { 
+            background: #ffffff; 
+            width: 210mm; margin: 0 auto; padding: 20mm; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-sizing: border-box;
         }
         
-        .header-title { font-size: 24px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; }
+        .header-title { font-size: 22px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 8px; margin-bottom: 15px; text-transform: uppercase; }
         
         .sticky-note { 
-            background: #fffbeb; padding: 25px; border-radius: 4px; border-left: 10px solid #f59e0b; 
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.1); margin: 30px 0; position: relative;
+            background: #fffbeb; padding: 20px; border-radius: 4px; border-left: 8px solid #f59e0b; 
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05); margin: 20px 0; position: relative;
         }
-        .sticky-note::after { content: "PENTING"; position: absolute; top: 10px; right: 10px; font-size: 10px; color: #b45309; font-weight: bold; }
-        .arahan-badge { background: #f59e0b; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
+        .arahan-badge { background: #f59e0b; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
 
         .stamp-box { 
-            border: 3px solid #1e293b; padding: 15px; width: 220px; text-align: center; 
-            float: right; margin-top: 40px; background: #fff; position: relative;
+            border: 2px solid #1e293b; padding: 10px; width: 200px; text-align: center; 
+            float: right; margin: 20px 0; background: #fff; position: relative;
         }
-        .stamp-box::before { content: "TANDATANGAN RASMI"; position: absolute; top: -12px; background: white; padding: 0 5px; font-size: 9px; font-weight: bold; color: #1e293b; }
-        .sig-image { max-height: 60px; display: block; margin: 0 auto 5px auto; }
+        .sig-image { max-height: 50px; display: block; margin: 0 auto 5px auto; }
+
+        .section-divider {
+            margin: 40px 0 20px 0;
+            border-top: 2px dashed #94a3b8;
+            padding-top: 20px;
+        }
 
         .original-doc-container {
             width: 100%;
@@ -76,7 +75,7 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         
         .original-doc-container iframe {
             width: 100%;
-            height: 1400px; 
+            height: 1200px; 
             border: 1px solid #cbd5e1;
             background: #fff;
         }
@@ -90,18 +89,20 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         @media print { 
             .no-print { display: none !important; } 
             body { background: white; padding: 0; } 
-            .page-box { box-shadow: none; border: none; margin: 0 auto; page-break-after: always; height: auto; min-height: unset; } 
-            .original-doc-container iframe { height: 1300px !important; border: none; }
+            .document-container { box-shadow: none; width: 100%; padding: 10mm; margin: 0; } 
+            .original-doc-container iframe { height: 1100px !important; border: none; }
         }
     </style>
 </head>
 <body>
 
-<!-- MUKA SURAT 1: BORANG MINIT CERAIAN -->
-<div class="page-box">
+<!-- KONTENA TUNGGAL: MENGANDUNGI BORANG MINIT & LAMPIRAN DALAM SATU PAPARAN -->
+<div class="document-container">
+    
+    <!-- BAHAGIAN 1: BORANG MINIT CERAIAN -->
     <div class="header-title">Borang Minit Ceraian</div>
     
-    <table width="100%" cellpadding="10" border="0" style="border-collapse: collapse; margin-bottom: 20px;">
+    <table width="100%" cellpadding="8" border="0" style="border-collapse: collapse; margin-bottom: 15px; font-size: 14px;">
         <tr>
             <td width="50%" style="border: 1px solid #e2e8f0;"><strong>No. Rujukan:</strong><br><?= $no_rujukan ?></td>
             <td width="50%" style="border: 1px solid #e2e8f0;"><strong>Tarikh Terima:</strong><br><?= $tarikh_terima ?></td>
@@ -114,21 +115,23 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
 
     <div class="sticky-note">
         <div class="arahan-badge"><i class="fa-solid fa-bolt"></i> ARAHAN: <?= $arahan ?></div>
-        <div style="font-size: 16px; color: #451a03; line-height: 1.6;"><?= $catatan ?></div>
+        <div style="font-size: 15px; color: #451a03; line-height: 1.5;"><?= $catatan ?></div>
     </div>
 
     <?php if (!empty($signature_data)) { ?>
+        <div style="clear: both;"></div>
         <div class="stamp-box">
             <img src="<?= $signature_data ?>" class="sig-image">
-            <div style="border-top: 1px solid #000; font-size: 11px; font-weight: bold; padding-top: 5px;">
+            <div style="border-top: 1px solid #000; font-size: 10px; font-weight: bold; padding-top: 4px;">
                 PENGARAH<br><?= $tarikh_sah ?>
             </div>
         </div>
+        <div style="clear: both;"></div>
     <?php } ?>
-</div>
 
-<!-- MUKA SURAT 2: DOKUMEN / BORANG ASAL DARI GOOGLE DRIVE -->
-<div class="page-box">
+    <!-- BAHAGIAN 2: DOKUMEN / BORANG ASAL GOOGLE DRIVE BERSAMBUNG TERUS -->
+    <div class="section-divider"></div>
+    
     <div class="header-title">Dokumen / Borang Asal Lampiran</div>
     <div class="original-doc-container">
         <?php if (!empty($drive_file_id)) { 
@@ -144,11 +147,12 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         ?>
             <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
         <?php } else { ?>
-            <p style="color: #ef4444; font-weight: bold; margin-top: 50px;">
+            <p style="color: #ef4444; font-weight: bold; margin-top: 20px;">
                 <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
             </p>
         <?php } ?>
     </div>
+
 </div>
 
 <div class="btn-container no-print">
