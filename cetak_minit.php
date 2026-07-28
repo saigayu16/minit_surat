@@ -74,7 +74,6 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
             text-align: center;
         }
         
-        /* Set iframe tinggi maksimum supaya muat dokumen panjang & boleh skrol penuh */
         .original-doc-container iframe {
             width: 100%;
             height: 1400px; 
@@ -88,7 +87,6 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         .btn-back { background: #e2e8f0; color: #475569; }
         .btn-action:hover { transform: scale(1.05); }
 
-        /* Tetapan khusus semasa Print / Save as PDF */
         @media print { 
             .no-print { display: none !important; } 
             body { background: white; padding: 0; } 
@@ -119,41 +117,37 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         <div style="font-size: 16px; color: #451a03; line-height: 1.6;"><?= $catatan ?></div>
     </div>
 
-    <?php if (!empty($signature_data)): ?>
+    <?php if (!empty($signature_data)) { ?>
         <div class="stamp-box">
             <img src="<?= $signature_data ?>" class="sig-image">
             <div style="border-top: 1px solid #000; font-size: 11px; font-weight: bold; padding-top: 5px;">
                 PENGARAH<br><?= $tarikh_sah ?>
             </div>
         </div>
-    <?php endif; ?>
+    <?php } ?>
 </div>
 
 <!-- MUKA SURAT 2: DOKUMEN / BORANG ASAL DARI GOOGLE DRIVE -->
 <div class="page-box">
     <div class="header-title">Dokumen / Borang Asal Lampiran</div>
     <div class="original-doc-container">
-        <?php if (!empty($drive_file_id)): ?>
-            <?php 
-                if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false): 
-                    $embed_url = str_replace('/view?usp=sharing', '/preview', $drive_file_id);
-                    $embed_url = str_replace('/view?usp=drivesdk', '/preview', $embed_url);
-                    if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
-                        $embed_url = str_replace('view?', 'preview?', $embed_url);
-                    }
-                else: 
-                    $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
-                endif; 
-            ?>
-            
-            <!-- Iframe dengan ketinggian responsif penuh untuk menampung pelbagai muka surat -->
+        <?php if (!empty($drive_file_id)) { 
+            if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false) {
+                $embed_url = str_replace('/view?usp=sharing', '/preview', $drive_file_id);
+                $embed_url = str_replace('/view?usp=drivesdk', '/preview', $embed_url);
+                if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
+                    $embed_url = str_replace('view?', 'preview?', $embed_url);
+                }
+            } else {
+                $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
+            }
+        ?>
             <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
-
-        <?php else: ?>
+        <?php } else { ?>
             <p style="color: #ef4444; font-weight: bold; margin-top: 50px;">
                 <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
             </p>
-        <?php endif; ?>
+        <?php } ?>
     </div>
 </div>
 
