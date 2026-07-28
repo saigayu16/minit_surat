@@ -70,16 +70,15 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         .original-doc-container {
             width: 100%;
             text-align: center;
-            position: relative;
-            overflow: hidden;
         }
         
-        /* Tetapan Iframe untuk paparan penuh tanpa gangguan */
+        /* Tetapan iframe tanpa border luar yang mengganggu */
         .original-doc-container iframe {
             width: 100%;
-            height: 1300px; 
-            border: 1px solid #cbd5e1;
+            height: 1400px; 
+            border: none;
             background: #fff;
+            overflow: hidden;
         }
 
         .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 999; }
@@ -92,7 +91,7 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
             .no-print { display: none !important; } 
             body { background: white; padding: 0; } 
             .document-container { box-shadow: none; width: 100%; padding: 10mm; margin: 0; } 
-            .original-doc-container iframe { height: 1200px !important; border: none; }
+            .original-doc-container iframe { height: 1300px !important; border: none; }
         }
     </style>
 </head>
@@ -146,8 +145,8 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
                 $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
             }
         ?>
-            <!-- Tambahan parameter rm=minimal untuk mengurangkan gangguan antara muka Google Drive -->
-            <iframe src="<?= htmlspecialchars($embed_url) ?>?rm=minimal" allow="autoplay"></iframe>
+            <!-- Menggunakan parameter em=true dan rm=minimal untuk menyembunyikan kawalan bar Google Drive -->
+            <iframe src="<?= htmlspecialchars($embed_url) ?>?rm=minimal&em=true" scrolling="no" allow="autoplay"></iframe>
         <?php } else { ?>
             <p style="color: #ef4444; font-weight: bold; margin-top: 20px;">
                 <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
