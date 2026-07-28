@@ -23,19 +23,21 @@ $catatan = !empty($row['catatan']) ? nl2br(htmlspecialchars($row['catatan'])) : 
 $arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'TIADA ARAHAN');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 $signature_data = $row['tandatangan']; 
+
+// Ambil path fail asal (Ubah nama kolum 'fail_asal' mengikut database anda jika perlu, cth: 'dokumen', 'file_path')
+$fail_asal = $row['fail_asal'] ?? ''; 
 ?>
 
 <!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>Borang Minit Rasmi - <?= $no_rujukan ?></title>
+    <title>Cetak Dokumen & Minit - <?= $no_rujukan ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Background Image Setting */
         body { 
             margin: 0; padding: 20px; 
-            background-image: url('daftarsurat.jpg'); /* Pastikan fail gambar ada di folder yang sama */
+            background-image: url('daftarsurat.jpg');
             background-size: cover; 
             background-position: center; 
             background-attachment: fixed; 
@@ -44,16 +46,17 @@ $signature_data = $row['tandatangan'];
         }
         
         .page-box { 
-            background: rgba(255, 255, 255, 0.95); /* Sedikit transparent untuk nampak latar belakang */
-            width: 210mm; margin: 0 auto 100px auto; padding: 25mm; 
+            background: rgba(255, 255, 255, 0.95); 
+            width: 210mm; margin: 0 auto 50px auto; padding: 25mm; 
             border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             min-height: 297mm; position: relative; box-sizing: border-box;
+            page-break-after: always; /* Pastikan ia pisah muka surat apabila dicetak */
         }
         
         .header-title { font-size: 24px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; }
         
         .sticky-note { 
-            background: #fffbeb; padding: 25px; border-radius: 4px; border-left: 10px solid #f59e0b; 
+            background: #fffbeb; padding: 25px; border-radius: 4px; border-left: 10px; border-left-color: #f59e0b; 
             box-shadow: 5px 5px 15px rgba(0,0,0,0.1); margin: 30px 0; position: relative;
         }
         .sticky-note::after { content: "PENTING"; position: absolute; top: 10px; right: 10px; font-size: 10px; color: #b45309; font-weight: bold; }
@@ -66,17 +69,39 @@ $signature_data = $row['tandatangan'];
         .stamp-box::before { content: "TANDATANGAN RASMI"; position: absolute; top: -12px; background: white; padding: 0 5px; font-size: 9px; font-weight: bold; color: #1e293b; }
         .sig-image { max-height: 60px; display: block; margin: 0 auto 5px auto; }
 
-        .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; }
+        /* Style untuk Bahagian Borang Asal */
+        .original-doc-container {
+            width: 100%;
+            text-align: center;
+        }
+        .original-doc-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .original-doc-container iframe {
+            width: 100%;
+            height: 850px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 999; }
         .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; text-decoration: none; display: inline-block; }
         .btn-print { background: #0f172a; color: white; }
         .btn-back { background: #e2e8f0; color: #475569; }
         .btn-action:hover { transform: scale(1.05); }
 
-        @media print { .no-print { display: none !important; } body { background: white; } .page-box { box-shadow: none; border: none; margin: 0 auto; } }
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white; padding: 0; } 
+            .page-box { box-shadow: none; border: none; margin: 0 auto; page-break-after: always; } 
+        }
     </style>
 </head>
 <body>
 
+<!-- MUKA SURAT 1: BORANG MINIT CERAIAN -->
 <div class="page-box">
     <div class="header-title">Borang Minit Ceraian</div>
     
@@ -106,12 +131,34 @@ $signature_data = $row['tandatangan'];
     <?php endif; ?>
 </div>
 
+<!-- MUKA SURAT 2: BORANG / DOKUMEN ASAL -->
+<div class="page-box">
+    <div class="header-title">Dokumen / Borang Asal Lampiran</div>
+    <div class="original-doc-container">
+        <?php if (!empty($fail_asal)): ?>
+            <?php 
+                $file_extension = strtolower(pathinfo($fail_asal, PATHINFO_EXTENSION));
+                // Semak sama ada fail adalah gambar atau PDF
+                if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'gif'])): 
+            ?>
+                <img src="<?= htmlspecialchars($fail_asal) ?>" alt="Dokumen Asal">
+            <?php elseif ($file_extension === 'pdf'): ?>
+                <iframe src="<?= htmlspecialchars($fail_asal) ?>"></iframe>
+            <?php else: ?>
+                <p>Format fail tidak disokong untuk paparan terus. <a href="<?= htmlspecialchars($fail_asal) ?>" target="_blank">Klik di sini untuk muat turun fail asal</a>.</p>
+            <?php endif; ?>
+        <?php else: ?>
+            <p style="color: #64748b; font-style: italic; margin-top: 50px;">Tiada fail dokumen asal dilampirkan atau direkodkan untuk rujukan ini.</p>
+        <?php endif; ?>
+    </div>
+</div>
+
 <div class="btn-container no-print">
     <a href="homeadmin.php" class="btn-action btn-back">
         <i class="fa-solid fa-arrow-left"></i> KEMBALI
     </a>
     <button class="btn-action btn-print" onclick="window.print()">
-        <i class="fa-solid fa-print"></i> CETAK BORANG RASMI
+        <i class="fa-solid fa-print"></i> CETAK KEDUA-DUA BORANG
     </button>
 </div>
 
