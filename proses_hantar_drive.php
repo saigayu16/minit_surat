@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 $input = json_decode(file_get_contents('php://input'), true);
 
-$webAppUrl = 'https://script.google.com/macros/s/AKfycbwy4aQdfAN3M_72NdFQCFosvM9DAe74BIJaRSr4-0orntxrBV-0JdOqaF4qMg_aBUU_/exec';
+$webAppUrl = 'https://script.google.com/macros/s/AKfycbz4fvzdK6MGuXebu5CNNeh1AYbr9frKO0c9phLmShTzxkAecnqAsPGLvJXVf79unVU_/exec';
 
 $payload = json_encode([
     "image" => str_replace('data:image/png;base64,', '', $input['image']),
