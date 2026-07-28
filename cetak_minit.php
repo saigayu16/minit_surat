@@ -25,19 +25,6 @@ $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_
 $signature_data = $row['tandatangan']; 
 
 $drive_file_id = trim($row['drive_file_id'] ?? ''); 
-
-// Tukar ID Google Drive kepada pautan eksport PDF terus (menghapuskan kotak pop-up iframe Google)
-$pdf_direct_url = "";
-if (!empty($drive_file_id)) {
-    if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false) {
-        // Ekstrak ID daripada URL Google Drive jika admin masukkan pautan penuh
-        preg_match('/[-\w]{25,}/', $drive_file_id, $matches);
-        $extracted_id = $matches[0] ?? $drive_file_id;
-        $pdf_direct_url = "https://drive.google.com/uc?export=download&id=" . $extracted_id;
-    } else {
-        $pdf_direct_url = "https://drive.google.com/uc?export=download&id=" . $drive_file_id;
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -83,17 +70,16 @@ if (!empty($drive_file_id)) {
         }
         .sig-image { max-height: 50px; display: block; margin: 0 auto 5px auto; }
 
-        /* Paparan Dokumen PDF Asal Page by Page secara langsung */
         .pdf-viewer-container {
             width: 100%;
             text-align: center;
         }
         
-        .pdf-viewer-container embed, 
-        .pdf-viewer-container object {
+        .pdf-viewer-container iframe {
             width: 100%;
-            height: 1150px;
+            height: 1200px;
             border: 1px solid #cbd5e1;
+            background: #fff;
         }
 
         .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 999; }
@@ -107,8 +93,7 @@ if (!empty($drive_file_id)) {
             body { background: white; padding: 0; } 
             .document-container { box-shadow: none; width: 100%; padding: 0; margin: 0; } 
             .page-minit { page-break-after: always; border: none; }
-            .pdf-viewer-container embed, 
-            .pdf-viewer-container object { height: 100vh; border: none; }
+            .pdf-viewer-container iframe { height: 100vh; border: none; }
         }
     </style>
 </head>
@@ -148,16 +133,22 @@ if (!empty($drive_file_id)) {
         <?php } ?>
     </div>
 
-    <!-- MUKA SURAT SETERUSNYA: DOKUMEN PDF ASAL PAGE-BY-PAGE -->
+    <!-- MUKA SURAT SETERUSNYA: DOKUMEN PDF ASAL DALAM PAPARAN SKRIN SAMA -->
     <div>
         <div class="header-title">Dokumen / Borang Asal Lampiran</div>
         <div class="pdf-viewer-container">
-            <?php if (!empty($pdf_direct_url)) { ?>
-                <!-- Menggunakan tag object/embed untuk paparan PDF asli bersambung muka surat -->
-                <object data="<?= $pdf_direct_url ?>#view=FitH" type="application/pdf">
-                    <embed src="<?= $pdf_direct_url ?>#view=FitH" type="application/pdf" />
-                    <p>Pelayar web anda tidak menyokong paparan PDF terus. Sila muat turun fail.</p>
-                </object>
+            <?php if (!empty($drive_file_id)) { 
+                if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false) {
+                    $embed_url = str_replace('/view?usp=sharing', '/preview', $drive_file_id);
+                    $embed_url = str_replace('/view?usp=drivesdk', '/preview', $embed_url);
+                    if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
+                        $embed_url = str_replace('view?', 'preview?', $embed_url);
+                    }
+                } else {
+                    $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
+                }
+            ?>
+                <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
             <?php } else { ?>
                 <p style="color: #ef4444; font-weight: bold; margin-top: 20px;">
                     <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
@@ -172,6 +163,7 @@ if (!empty($drive_file_id)) {
     <a href="homeadmin.php" class="btn-action btn-back">
         <i class="fa-solid fa-arrow-left"></i> KEMBALI
     </a>
+    <!-- Apabila butang ini ditekan, pilih 'Save as PDF' di menu cetak untuk simpan Minit + Lampiran dalam satu fail PDF -->
     <button class="btn-action btn-print" onclick="window.print()">
         <i class="fa-solid fa-print"></i> CETAK / SIMPAN SEMUA SEKALIGUS
     </button>
