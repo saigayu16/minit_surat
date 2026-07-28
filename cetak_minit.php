@@ -13,7 +13,7 @@ $row = $stmt->get_result()->fetch_assoc();
 
 if (!$row) { die("Rekod tidak ditemui."); }
 
-// Data Formatting Minit
+// Data Formatting
 $status = strtoupper(trim($row['status'] ?? 'TIADA STATUS'));
 $no_rujukan = htmlspecialchars($row['no_rujukan'] ?? '-');
 $tarikh_terima = !empty($row['tarikh_terima']) ? date('d/m/Y', strtotime($row['tarikh_terima'])) : '-';
@@ -23,149 +23,95 @@ $catatan = !empty($row['catatan']) ? nl2br(htmlspecialchars($row['catatan'])) : 
 $arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'TIADA ARAHAN');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 $signature_data = $row['tandatangan']; 
-
-$drive_file_id = trim($row['drive_file_id'] ?? ''); 
 ?>
 
 <!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>Cetak Dokumen & Minit - <?= $no_rujukan ?></title>
+    <title>Borang Minit Rasmi - <?= $no_rujukan ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Background Image Setting */
         body { 
             margin: 0; padding: 20px; 
-            background: #94a3b8;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-image: url('daftarsurat.jpg'); /* Pastikan fail gambar ada di folder yang sama */
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+            background-repeat: no-repeat;
+            font-family: 'Segoe UI', sans-serif; 
         }
         
-        /* Kontena Keseluruhan Dokumen Bergabung */
-        .document-container { 
-            background: #ffffff; 
-            width: 210mm; margin: 0 auto 40px auto; padding: 20mm; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            box-sizing: border-box;
+        .page-box { 
+            background: rgba(255, 255, 255, 0.95); /* Sedikit transparent untuk nampak latar belakang */
+            width: 210mm; margin: 0 auto 100px auto; padding: 25mm; 
+            border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            min-height: 297mm; position: relative; box-sizing: border-box;
         }
         
-        .page-minit {
-            min-height: 250mm;
-            position: relative;
-            padding-bottom: 20px;
-            border-bottom: 3px dashed #cbd5e1;
-            margin-bottom: 30px;
-        }
-
-        .header-title { font-size: 22px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase; }
+        .header-title { font-size: 24px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; }
         
         .sticky-note { 
-            background: #fffbeb; padding: 20px; border-radius: 4px; border-left: 8px solid #f59e0b; 
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.05); margin: 25px 0; position: relative;
+            background: #fffbeb; padding: 25px; border-radius: 4px; border-left: 10px solid #f59e0b; 
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.1); margin: 30px 0; position: relative;
         }
-        .arahan-badge { background: #f59e0b; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
+        .sticky-note::after { content: "PENTING"; position: absolute; top: 10px; right: 10px; font-size: 10px; color: #b45309; font-weight: bold; }
+        .arahan-badge { background: #f59e0b; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
 
         .stamp-box { 
-            border: 2px solid #1e293b; padding: 10px; width: 200px; text-align: center; 
-            float: right; margin-top: 20px; background: #fff; position: relative;
+            border: 3px solid #1e293b; padding: 15px; width: 220px; text-align: center; 
+            float: right; margin-top: 40px; background: #fff; position: relative;
         }
-        .sig-image { max-height: 50px; display: block; margin: 0 auto 5px auto; }
+        .stamp-box::before { content: "TANDATANGAN RASMI"; position: absolute; top: -12px; background: white; padding: 0 5px; font-size: 9px; font-weight: bold; color: #1e293b; }
+        .sig-image { max-height: 60px; display: block; margin: 0 auto 5px auto; }
 
-        .pdf-viewer-container {
-            width: 100%;
-            text-align: center;
-        }
-        
-        .pdf-viewer-container iframe {
-            width: 100%;
-            height: 1200px;
-            border: 1px solid #cbd5e1;
-            background: #fff;
-        }
-
-        .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 999; }
+        .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; }
         .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; text-decoration: none; display: inline-block; }
         .btn-print { background: #0f172a; color: white; }
         .btn-back { background: #e2e8f0; color: #475569; }
         .btn-action:hover { transform: scale(1.05); }
 
-        @media print { 
-            .no-print { display: none !important; } 
-            body { background: white; padding: 0; } 
-            .document-container { box-shadow: none; width: 100%; padding: 0; margin: 0; } 
-            .page-minit { page-break-after: always; border: none; }
-            .pdf-viewer-container iframe { height: 100vh; border: none; }
-        }
+        @media print { .no-print { display: none !important; } body { background: white; } .page-box { box-shadow: none; border: none; margin: 0 auto; } }
     </style>
 </head>
 <body>
 
-<div class="document-container">
+<div class="page-box">
+    <div class="header-title">Borang Minit Ceraian</div>
     
-    <!-- MUKA SURAT 1: BORANG MINIT CERAIAN -->
-    <div class="page-minit">
-        <div class="header-title">Borang Minit Ceraian</div>
-        
-        <table width="100%" cellpadding="8" border="0" style="border-collapse: collapse; margin-bottom: 15px; font-size: 14px;">
-            <tr>
-                <td width="50%" style="border: 1px solid #e2e8f0;"><strong>No. Rujukan:</strong><br><?= $no_rujukan ?></td>
-                <td width="50%" style="border: 1px solid #e2e8f0;"><strong>Tarikh Terima:</strong><br><?= $tarikh_terima ?></td>
-            </tr>
-            <tr>
-                <td style="border: 1px solid #e2e8f0;"><strong>Daripada:</strong><br><?= $daripada ?></td>
-                <td style="border: 1px solid #e2e8f0;"><strong>Didaftarkan Oleh:</strong><br><?= $didaftarkan_oleh ?></td>
-            </tr>
-        </table>
+    <table width="100%" cellpadding="10" border="0" style="border-collapse: collapse; margin-bottom: 20px;">
+        <tr>
+            <td width="50%" style="border: 1px solid #e2e8f0;"><strong>No. Rujukan:</strong><br><?= $no_rujukan ?></td>
+            <td width="50%" style="border: 1px solid #e2e8f0;"><strong>Tarikh Terima:</strong><br><?= $tarikh_terima ?></td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #e2e8f0;"><strong>Daripada:</strong><br><?= $daripada ?></td>
+            <td style="border: 1px solid #e2e8f0;"><strong>Didaftarkan Oleh:</strong><br><?= $didaftarkan_oleh ?></td>
+        </tr>
+    </table>
 
-        <div class="sticky-note">
-            <div class="arahan-badge"><i class="fa-solid fa-bolt"></i> ARAHAN: <?= $arahan ?></div>
-            <div style="font-size: 15px; color: #451a03; line-height: 1.5;"><?= $catatan ?></div>
-        </div>
+    <div class="sticky-note">
+        <div class="arahan-badge"><i class="fa-solid fa-bolt"></i> ARAHAN: <?= $arahan ?></div>
+        <div style="font-size: 16px; color: #451a03; line-height: 1.6;"><?= $catatan ?></div>
+    </div>
 
-        <?php if (!empty($signature_data)) { ?>
-            <div style="clear: both;"></div>
-            <div class="stamp-box">
-                <img src="<?= $signature_data ?>" class="sig-image">
-                <div style="border-top: 1px solid #000; font-size: 10px; font-weight: bold; padding-top: 4px;">
-                    PENGARAH<br><?= $tarikh_sah ?>
-                </div>
+    <?php if (!empty($signature_data)): ?>
+        <div class="stamp-box">
+            <img src="<?= $signature_data ?>" class="sig-image">
+            <div style="border-top: 1px solid #000; font-size: 11px; font-weight: bold; padding-top: 5px;">
+                PENGARAH<br><?= $tarikh_sah ?>
             </div>
-            <div style="clear: both;"></div>
-        <?php } ?>
-    </div>
-
-    <!-- MUKA SURAT SETERUSNYA: DOKUMEN PDF ASAL DALAM PAPARAN SKRIN SAMA -->
-    <div>
-        <div class="header-title">Dokumen / Borang Asal Lampiran</div>
-        <div class="pdf-viewer-container">
-            <?php if (!empty($drive_file_id)) { 
-                if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false) {
-                    $embed_url = str_replace('/view?usp=sharing', '/preview', $drive_file_id);
-                    $embed_url = str_replace('/view?usp=drivesdk', '/preview', $embed_url);
-                    if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
-                        $embed_url = str_replace('view?', 'preview?', $embed_url);
-                    }
-                } else {
-                    $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
-                }
-            ?>
-                <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
-            <?php } else { ?>
-                <p style="color: #ef4444; font-weight: bold; margin-top: 20px;">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
-                </p>
-            <?php } ?>
         </div>
-    </div>
-
+    <?php endif; ?>
 </div>
 
 <div class="btn-container no-print">
     <a href="homeadmin.php" class="btn-action btn-back">
         <i class="fa-solid fa-arrow-left"></i> KEMBALI
     </a>
-    <!-- Apabila butang ini ditekan, pilih 'Save as PDF' di menu cetak untuk simpan Minit + Lampiran dalam satu fail PDF -->
     <button class="btn-action btn-print" onclick="window.print()">
-        <i class="fa-solid fa-print"></i> CETAK / SIMPAN SEMUA SEKALIGUS
+        <i class="fa-solid fa-print"></i> CETAK BORANG RASMI
     </button>
 </div>
 
