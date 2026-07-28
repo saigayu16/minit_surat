@@ -24,11 +24,8 @@ $arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'TIADA ARAHAN');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 $signature_data = $row['tandatangan']; 
 
-/**
- * PENTING: Sila pastikan nama kolum di bawah sepadan dengan database anda.
- * Contoh nama kolum yang biasa digunakan: 'fail_asal', 'lampiran', 'dokumen', atau 'google_drive_id'
- */
-$fail_asal = trim($row['fail_asal'] ?? ''); 
+// BACA ID DARI DRIVE MENGIKUT KOLUM SEBENAR: drive_file_id
+$drive_file_id = trim($row['drive_file_id'] ?? ''); 
 ?>
 
 <!DOCTYPE html>
@@ -53,7 +50,7 @@ $fail_asal = trim($row['fail_asal'] ?? '');
             width: 210mm; margin: 0 auto 50px auto; padding: 25mm; 
             border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             min-height: 297mm; position: relative; box-sizing: border-box;
-            page-break-after: always; /* Pecah muka surat semasa cetak */
+            page-break-after: always; 
         }
         
         .header-title { font-size: 24px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; }
@@ -72,16 +69,9 @@ $fail_asal = trim($row['fail_asal'] ?? '');
         .stamp-box::before { content: "TANDATANGAN RASMI"; position: absolute; top: -12px; background: white; padding: 0 5px; font-size: 9px; font-weight: bold; color: #1e293b; }
         .sig-image { max-height: 60px; display: block; margin: 0 auto 5px auto; }
 
-        /* Style untuk Bahagian Borang Asal / Google Drive */
         .original-doc-container {
             width: 100%;
             text-align: center;
-        }
-        .original-doc-container img {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #cbd5e1;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .original-doc-container iframe {
             width: 100%;
@@ -134,45 +124,30 @@ $fail_asal = trim($row['fail_asal'] ?? '');
     <?php endif; ?>
 </div>
 
-<!-- MUKA SURAT 2: BORANG / DOKUMEN ASAL (GOOGLE DRIVE / UPLOAD) -->
+<!-- MUKA SURAT 2: DOKUMEN ASAL DARI GOOGLE DRIVE -->
 <div class="page-box">
     <div class="header-title">Dokumen / Borang Asal Lampiran</div>
     <div class="original-doc-container">
-        <?php if (!empty($fail_asal)): ?>
-            <?php if (filter_var($fail_asal, FILTER_VALIDATE_URL) || strpos($fail_asal, 'drive.google.com') !== false): ?>
-                <!-- Jika pautan Google Drive -->
-                <?php 
-                    $embed_url = str_replace('/view?usp=sharing', '/preview', $fail_asal);
+        <?php if (!empty($drive_file_id)): ?>
+            <?php 
+                // Jika nilai dalam 'drive_file_id' adalah pautan penuh URL Google Drive
+                if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false): 
+                    $embed_url = str_replace('/view?usp=sharing', '/preview', $drive_file_id);
                     $embed_url = str_replace('/view?usp=drivesdk', '/preview', $embed_url);
                     if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
                         $embed_url = str_replace('view?', 'preview?', $embed_url);
                     }
-                ?>
+            ?>
                 <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
 
-            <?php elseif (preg_match('/^[a-zA-Z0-9_-]{25,}$/', $fail_asal)): ?>
-                <!-- Jika simpan Google Drive File ID sahaja -->
-                <iframe src="https://drive.google.com/file/d/<?= htmlspecialchars($fail_asal) ?>/preview" allow="autoplay"></iframe>
-
             <?php else: ?>
-                <!-- Jika fail muat naik biasa di server -->
-                <?php 
-                    $file_extension = strtolower(pathinfo($fail_asal, PATHINFO_EXTENSION));
-                    if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'gif'])): 
-                ?>
-                    <img src="<?= htmlspecialchars($fail_asal) ?>" alt="Dokumen Asal">
-                <?php elseif ($file_extension === 'pdf'): ?>
-                    <iframe src="<?= htmlspecialchars($fail_asal) ?>"></iframe>
-                <?php else: ?>
-                    <p>Fail dikesan: <a href="<?= htmlspecialchars($fail_asal) ?>" target="_blank">Klik di sini untuk buka dokumen asal</a></p>
-                    <iframe src="<?= htmlspecialchars($fail_asal) ?>"></iframe>
-                <?php endif; ?>
+                <!-- Jika nilai dalam 'drive_file_id' ialah ID fail sahaja (cth: 1B2v... ) -->
+                <iframe src="https://drive.google.com/file/d/<?= htmlspecialchars($drive_file_id) ?>/preview" allow="autoplay"></iframe>
             <?php endif; ?>
 
         <?php else: ?>
             <p style="color: #ef4444; font-weight: bold; margin-top: 50px;">
-                <i class="fa-solid fa-triangle-exclamation"></i> Tiada fail dokumen asal atau ID Google Drive dijumpai dalam rekod ini.
-                <br><span style="font-size: 13px; color: #64748b; font-weight: normal;">Sila pastikan kolum pautan fail/Google Drive di database dinamakan betul (cth: `fail_asal`, `lampiran`).</span>
+                <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
             </p>
         <?php endif; ?>
     </div>
