@@ -24,7 +24,7 @@ $arahan = htmlspecialchars($row['arahan_pilihan'] ?? 'TIADA ARAHAN');
 $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_sah'])) : date('d/m/Y');
 $signature_data = $row['tandatangan']; 
 
-// BACA ID DARI DRIVE MENGIKUT KOLUM SEBENAR: drive_file_id
+// Baca ID dari kolum drive_file_id
 $drive_file_id = trim($row['drive_file_id'] ?? ''); 
 ?>
 
@@ -73,11 +73,28 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
             width: 100%;
             text-align: center;
         }
+        
+        /* Tetapkan ketinggian iframe lebih panjang supaya muat banyak muka surat */
         .original-doc-container iframe {
             width: 100%;
-            height: 850px;
+            height: 1100px; 
             border: 1px solid #cbd5e1;
+            background: #fff;
         }
+
+        .btn-drive-open {
+            display: inline-block;
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-drive-open:hover { background: #1d4ed8; }
 
         .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 999; }
         .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; text-decoration: none; display: inline-block; }
@@ -88,7 +105,8 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         @media print { 
             .no-print { display: none !important; } 
             body { background: white; padding: 0; } 
-            .page-box { box-shadow: none; border: none; margin: 0 auto; page-break-after: always; } 
+            .page-box { box-shadow: none; border: none; margin: 0 auto; page-break-after: always; height: auto; min-height: unset; } 
+            .original-doc-container iframe { height: 1000px !important; border: none; }
         }
     </style>
 </head>
@@ -130,20 +148,28 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
     <div class="original-doc-container">
         <?php if (!empty($drive_file_id)): ?>
             <?php 
-                // Jika nilai dalam 'drive_file_id' adalah pautan penuh URL Google Drive
                 if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false): 
                     $embed_url = str_replace('/view?usp=sharing', '/preview', $drive_file_id);
                     $embed_url = str_replace('/view?usp=drivesdk', '/preview', $embed_url);
                     if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
                         $embed_url = str_replace('view?', 'preview?', $embed_url);
                     }
+                    $full_drive_url = $drive_file_id;
+                else: 
+                    $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
+                    $full_drive_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/view";
+                endif; 
             ?>
-                <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
+            
+            <!-- Butang Pintasan ke Google Drive asal jika dokumen terlalu panjang -->
+            <div class="no-print">
+                <a href="<?= htmlspecialchars($full_drive_url) ?>" target="_blank" class="btn-drive-open">
+                    <i class="fa-brands fa-google-drive"></i> Buka Dokumen Penuh di Google Drive (Untuk Cetakan Penuh)
+                </a>
+            </div>
 
-            <?php else: ?>
-                <!-- Jika nilai dalam 'drive_file_id' ialah ID fail sahaja (cth: 1B2v... ) -->
-                <iframe src="https://drive.google.com/file/d/<?= htmlspecialchars($drive_file_id) ?>/preview" allow="autoplay"></iframe>
-            <?php endif; ?>
+            <!-- Paparan Iframe Dokumen -->
+            <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay" scrolling="yes"></iframe>
 
         <?php else: ?>
             <p style="color: #ef4444; font-weight: bold; margin-top: 50px;">
