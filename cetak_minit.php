@@ -25,6 +25,19 @@ $tarikh_sah = !empty($row['tarikh_sah']) ? date('d/m/Y', strtotime($row['tarikh_
 $signature_data = $row['tandatangan']; 
 
 $drive_file_id = trim($row['drive_file_id'] ?? ''); 
+
+// Tukar ID Google Drive kepada pautan eksport PDF terus (menghapuskan kotak pop-up iframe Google)
+$pdf_direct_url = "";
+if (!empty($drive_file_id)) {
+    if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false) {
+        // Ekstrak ID daripada URL Google Drive jika admin masukkan pautan penuh
+        preg_match('/[-\w]{25,}/', $drive_file_id, $matches);
+        $extracted_id = $matches[0] ?? $drive_file_id;
+        $pdf_direct_url = "https://drive.google.com/uc?export=download&id=" . $extracted_id;
+    } else {
+        $pdf_direct_url = "https://drive.google.com/uc?export=download&id=" . $drive_file_id;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -36,49 +49,51 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
     <style>
         body { 
             margin: 0; padding: 20px; 
-            background: #cbd5e1;
-            font-family: 'Segoe UI', sans-serif; 
+            background: #94a3b8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
         }
         
+        /* Kontena Keseluruhan Dokumen Bergabung */
         .document-container { 
             background: #ffffff; 
-            width: 210mm; margin: 0 auto; padding: 20mm; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 210mm; margin: 0 auto 40px auto; padding: 20mm; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             box-sizing: border-box;
         }
         
-        .header-title { font-size: 22px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 8px; margin-bottom: 15px; text-transform: uppercase; }
+        .page-minit {
+            min-height: 250mm;
+            position: relative;
+            padding-bottom: 20px;
+            border-bottom: 3px dashed #cbd5e1;
+            margin-bottom: 30px;
+        }
+
+        .header-title { font-size: 22px; font-weight: 800; color: #1e293b; border-bottom: 3px solid #1e293b; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase; }
         
         .sticky-note { 
             background: #fffbeb; padding: 20px; border-radius: 4px; border-left: 8px solid #f59e0b; 
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.05); margin: 20px 0; position: relative;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05); margin: 25px 0; position: relative;
         }
         .arahan-badge { background: #f59e0b; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
 
         .stamp-box { 
             border: 2px solid #1e293b; padding: 10px; width: 200px; text-align: center; 
-            float: right; margin: 20px 0; background: #fff; position: relative;
+            float: right; margin-top: 20px; background: #fff; position: relative;
         }
         .sig-image { max-height: 50px; display: block; margin: 0 auto 5px auto; }
 
-        .section-divider {
-            margin: 40px 0 20px 0;
-            border-top: 2px dashed #94a3b8;
-            padding-top: 20px;
-        }
-
-        .original-doc-container {
+        /* Paparan Dokumen PDF Asal Page by Page secara langsung */
+        .pdf-viewer-container {
             width: 100%;
             text-align: center;
         }
         
-        /* Tetapan iframe tanpa border luar yang mengganggu */
-        .original-doc-container iframe {
+        .pdf-viewer-container embed, 
+        .pdf-viewer-container object {
             width: 100%;
-            height: 1400px; 
-            border: none;
-            background: #fff;
-            overflow: hidden;
+            height: 1150px;
+            border: 1px solid #cbd5e1;
         }
 
         .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 999; }
@@ -90,8 +105,10 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         @media print { 
             .no-print { display: none !important; } 
             body { background: white; padding: 0; } 
-            .document-container { box-shadow: none; width: 100%; padding: 10mm; margin: 0; } 
-            .original-doc-container iframe { height: 1300px !important; border: none; }
+            .document-container { box-shadow: none; width: 100%; padding: 0; margin: 0; } 
+            .page-minit { page-break-after: always; border: none; }
+            .pdf-viewer-container embed, 
+            .pdf-viewer-container object { height: 100vh; border: none; }
         }
     </style>
 </head>
@@ -99,59 +116,54 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
 
 <div class="document-container">
     
-    <!-- BAHAGIAN 1: BORANG MINIT CERAIAN -->
-    <div class="header-title">Borang Minit Ceraian</div>
-    
-    <table width="100%" cellpadding="8" border="0" style="border-collapse: collapse; margin-bottom: 15px; font-size: 14px;">
-        <tr>
-            <td width="50%" style="border: 1px solid #e2e8f0;"><strong>No. Rujukan:</strong><br><?= $no_rujukan ?></td>
-            <td width="50%" style="border: 1px solid #e2e8f0;"><strong>Tarikh Terima:</strong><br><?= $tarikh_terima ?></td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #e2e8f0;"><strong>Daripada:</strong><br><?= $daripada ?></td>
-            <td style="border: 1px solid #e2e8f0;"><strong>Didaftarkan Oleh:</strong><br><?= $didaftarkan_oleh ?></td>
-        </tr>
-    </table>
+    <!-- MUKA SURAT 1: BORANG MINIT CERAIAN -->
+    <div class="page-minit">
+        <div class="header-title">Borang Minit Ceraian</div>
+        
+        <table width="100%" cellpadding="8" border="0" style="border-collapse: collapse; margin-bottom: 15px; font-size: 14px;">
+            <tr>
+                <td width="50%" style="border: 1px solid #e2e8f0;"><strong>No. Rujukan:</strong><br><?= $no_rujukan ?></td>
+                <td width="50%" style="border: 1px solid #e2e8f0;"><strong>Tarikh Terima:</strong><br><?= $tarikh_terima ?></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #e2e8f0;"><strong>Daripada:</strong><br><?= $daripada ?></td>
+                <td style="border: 1px solid #e2e8f0;"><strong>Didaftarkan Oleh:</strong><br><?= $didaftarkan_oleh ?></td>
+            </tr>
+        </table>
 
-    <div class="sticky-note">
-        <div class="arahan-badge"><i class="fa-solid fa-bolt"></i> ARAHAN: <?= $arahan ?></div>
-        <div style="font-size: 15px; color: #451a03; line-height: 1.5;"><?= $catatan ?></div>
+        <div class="sticky-note">
+            <div class="arahan-badge"><i class="fa-solid fa-bolt"></i> ARAHAN: <?= $arahan ?></div>
+            <div style="font-size: 15px; color: #451a03; line-height: 1.5;"><?= $catatan ?></div>
+        </div>
+
+        <?php if (!empty($signature_data)) { ?>
+            <div style="clear: both;"></div>
+            <div class="stamp-box">
+                <img src="<?= $signature_data ?>" class="sig-image">
+                <div style="border-top: 1px solid #000; font-size: 10px; font-weight: bold; padding-top: 4px;">
+                    PENGARAH<br><?= $tarikh_sah ?>
+                </div>
+            </div>
+            <div style="clear: both;"></div>
+        <?php } ?>
     </div>
 
-    <?php if (!empty($signature_data)) { ?>
-        <div style="clear: both;"></div>
-        <div class="stamp-box">
-            <img src="<?= $signature_data ?>" class="sig-image">
-            <div style="border-top: 1px solid #000; font-size: 10px; font-weight: bold; padding-top: 4px;">
-                PENGARAH<br><?= $tarikh_sah ?>
-            </div>
+    <!-- MUKA SURAT SETERUSNYA: DOKUMEN PDF ASAL PAGE-BY-PAGE -->
+    <div>
+        <div class="header-title">Dokumen / Borang Asal Lampiran</div>
+        <div class="pdf-viewer-container">
+            <?php if (!empty($pdf_direct_url)) { ?>
+                <!-- Menggunakan tag object/embed untuk paparan PDF asli bersambung muka surat -->
+                <object data="<?= $pdf_direct_url ?>#view=FitH" type="application/pdf">
+                    <embed src="<?= $pdf_direct_url ?>#view=FitH" type="application/pdf" />
+                    <p>Pelayar web anda tidak menyokong paparan PDF terus. Sila muat turun fail.</p>
+                </object>
+            <?php } else { ?>
+                <p style="color: #ef4444; font-weight: bold; margin-top: 20px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
+                </p>
+            <?php } ?>
         </div>
-        <div style="clear: both;"></div>
-    <?php } ?>
-
-    <!-- BAHAGIAN 2: DOKUMEN / BORANG ASAL GOOGLE DRIVE -->
-    <div class="section-divider"></div>
-    
-    <div class="header-title">Dokumen / Borang Asal Lampiran</div>
-    <div class="original-doc-container">
-        <?php if (!empty($drive_file_id)) { 
-            if (filter_var($drive_file_id, FILTER_VALIDATE_URL) || strpos($drive_file_id, 'drive.google.com') !== false) {
-                $embed_url = str_replace('/view?usp=sharing', '/preview', $drive_file_id);
-                $embed_url = str_replace('/view?usp=drivesdk', '/preview', $embed_url);
-                if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
-                    $embed_url = str_replace('view?', 'preview?', $embed_url);
-                }
-            } else {
-                $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
-            }
-        ?>
-            <!-- Menggunakan parameter em=true dan rm=minimal untuk menyembunyikan kawalan bar Google Drive -->
-            <iframe src="<?= htmlspecialchars($embed_url) ?>?rm=minimal&em=true" scrolling="no" allow="autoplay"></iframe>
-        <?php } else { ?>
-            <p style="color: #ef4444; font-weight: bold; margin-top: 20px;">
-                <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
-            </p>
-        <?php } ?>
     </div>
 
 </div>
