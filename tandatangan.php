@@ -68,7 +68,7 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
             <p><strong>Perkara:</strong> <?= htmlspecialchars($surat['perkara']) ?></p>
         </div>
 
-        <label><strong>Catatan Pengarah:</strong></label>
+        <label><strong>Catatan:</strong></label>
         <textarea id="catatan" placeholder="Tulis ulasan atau arahan di sini..."></textarea>
         
         <div class="sticky-note-box">
