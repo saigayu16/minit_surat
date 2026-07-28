@@ -40,7 +40,6 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
             font-family: 'Segoe UI', sans-serif; 
         }
         
-        /* Kontena utama gabungan satu dokumen panjang */
         .document-container { 
             background: #ffffff; 
             width: 210mm; margin: 0 auto; padding: 20mm; 
@@ -71,11 +70,14 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         .original-doc-container {
             width: 100%;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
         
+        /* Tetapan Iframe untuk paparan penuh tanpa gangguan */
         .original-doc-container iframe {
             width: 100%;
-            height: 1200px; 
+            height: 1300px; 
             border: 1px solid #cbd5e1;
             background: #fff;
         }
@@ -90,13 +92,12 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
             .no-print { display: none !important; } 
             body { background: white; padding: 0; } 
             .document-container { box-shadow: none; width: 100%; padding: 10mm; margin: 0; } 
-            .original-doc-container iframe { height: 1100px !important; border: none; }
+            .original-doc-container iframe { height: 1200px !important; border: none; }
         }
     </style>
 </head>
 <body>
 
-<!-- KONTENA TUNGGAL: MENGANDUNGI BORANG MINIT & LAMPIRAN DALAM SATU PAPARAN -->
 <div class="document-container">
     
     <!-- BAHAGIAN 1: BORANG MINIT CERAIAN -->
@@ -129,7 +130,7 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         <div style="clear: both;"></div>
     <?php } ?>
 
-    <!-- BAHAGIAN 2: DOKUMEN / BORANG ASAL GOOGLE DRIVE BERSAMBUNG TERUS -->
+    <!-- BAHAGIAN 2: DOKUMEN / BORANG ASAL GOOGLE DRIVE -->
     <div class="section-divider"></div>
     
     <div class="header-title">Dokumen / Borang Asal Lampiran</div>
@@ -145,7 +146,8 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
                 $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
             }
         ?>
-            <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
+            <!-- Tambahan parameter rm=minimal untuk mengurangkan gangguan antara muka Google Drive -->
+            <iframe src="<?= htmlspecialchars($embed_url) ?>?rm=minimal" allow="autoplay"></iframe>
         <?php } else { ?>
             <p style="color: #ef4444; font-weight: bold; margin-top: 20px;">
                 <i class="fa-solid fa-triangle-exclamation"></i> Tiada ID Google Drive dijumpai dalam kolum `drive_file_id` untuk rekod ini.
