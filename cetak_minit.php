@@ -46,8 +46,8 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         }
         
         .page-box { 
-            background: rgba(255, 255, 255, 0.95); 
-            width: 210mm; margin: 0 auto 50px auto; padding: 25mm; 
+            background: rgba(255, 255, 255, 0.98); 
+            width: 210mm; margin: 0 auto 30px auto; padding: 25mm; 
             border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             min-height: 297mm; position: relative; box-sizing: border-box;
             page-break-after: always; 
@@ -74,27 +74,13 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
             text-align: center;
         }
         
-        /* Tetapkan ketinggian iframe lebih panjang supaya muat banyak muka surat */
+        /* Set iframe tinggi maksimum supaya muat dokumen panjang & boleh skrol penuh */
         .original-doc-container iframe {
             width: 100%;
-            height: 1100px; 
+            height: 1400px; 
             border: 1px solid #cbd5e1;
             background: #fff;
         }
-
-        .btn-drive-open {
-            display: inline-block;
-            margin-bottom: 15px;
-            padding: 10px 20px;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .btn-drive-open:hover { background: #1d4ed8; }
 
         .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 999; }
         .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; text-decoration: none; display: inline-block; }
@@ -102,11 +88,12 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         .btn-back { background: #e2e8f0; color: #475569; }
         .btn-action:hover { transform: scale(1.05); }
 
+        /* Tetapan khusus semasa Print / Save as PDF */
         @media print { 
             .no-print { display: none !important; } 
             body { background: white; padding: 0; } 
             .page-box { box-shadow: none; border: none; margin: 0 auto; page-break-after: always; height: auto; min-height: unset; } 
-            .original-doc-container iframe { height: 1000px !important; border: none; }
+            .original-doc-container iframe { height: 1300px !important; border: none; }
         }
     </style>
 </head>
@@ -142,7 +129,7 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
     <?php endif; ?>
 </div>
 
-<!-- MUKA SURAT 2: DOKUMEN ASAL DARI GOOGLE DRIVE -->
+<!-- MUKA SURAT 2: DOKUMEN / BORANG ASAL DARI GOOGLE DRIVE -->
 <div class="page-box">
     <div class="header-title">Dokumen / Borang Asal Lampiran</div>
     <div class="original-doc-container">
@@ -154,22 +141,13 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
                     if(strpos($embed_url, '/preview') === false && strpos($embed_url, 'id=') !== false) {
                         $embed_url = str_replace('view?', 'preview?', $embed_url);
                     }
-                    $full_drive_url = $drive_file_id;
                 else: 
                     $embed_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/preview";
-                    $full_drive_url = "https://drive.google.com/file/d/" . htmlspecialchars($drive_file_id) . "/view";
                 endif; 
             ?>
             
-            <!-- Butang Pintasan ke Google Drive asal jika dokumen terlalu panjang -->
-            <div class="no-print">
-                <a href="<?= htmlspecialchars($full_drive_url) ?>" target="_blank" class="btn-drive-open">
-                    <i class="fa-brands fa-google-drive"></i> Buka Dokumen Penuh di Google Drive (Untuk Cetakan Penuh)
-                </a>
-            </div>
-
-            <!-- Paparan Iframe Dokumen -->
-            <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay" scrolling="yes"></iframe>
+            <!-- Iframe dengan ketinggian responsif penuh untuk menampung pelbagai muka surat -->
+            <iframe src="<?= htmlspecialchars($embed_url) ?>" allow="autoplay"></iframe>
 
         <?php else: ?>
             <p style="color: #ef4444; font-weight: bold; margin-top: 50px;">
@@ -184,7 +162,7 @@ $drive_file_id = trim($row['drive_file_id'] ?? '');
         <i class="fa-solid fa-arrow-left"></i> KEMBALI
     </a>
     <button class="btn-action btn-print" onclick="window.print()">
-        <i class="fa-solid fa-print"></i> CETAK KEDUA-DUA BORANG
+        <i class="fa-solid fa-print"></i> CETAK / SIMPAN SEMUA SEKALIGUS
     </button>
 </div>
 
