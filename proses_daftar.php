@@ -52,13 +52,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // 4. Integrasi API Brevo (E-mel)
     $api_key = getenv('BREVO_API_KEY');
+    
+    // Dapatkan URL asas laman web anda secara automatik atau letakkan link manual
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+    $host = $_SERVER['HTTP_HOST'];
+    // Contoh link direct ke halaman maklum/semakan berasaskan ID surat
+    $link_sistem = $protocol . "://$host/maklum.php?id=" . $id; 
+
     $data = [
         "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
         "to" => [["email" => $email_penerima]],
         "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "Assalamualaikum, terdapat surat baharu untuk tindakan anda."
+        "htmlContent" => "
+            <p>Assalamualaikum wbt,</p>
+            <p>Terdapat surat baharu dengan no rujukan <b>{$no_rujukan}</b> untuk tindakan anda.</p>
+            <p>Sila klik pautan di bawah untuk melihat butiran dan memuat naik dokumen:</p>
+            <p><a href='{$link_sistem}' style='background: #f57c00; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Buka Sistem Minit</a></p>
+            <p>Sekian, terima kasih.</p>
+        "
     ];
-
     // Sertakan lampiran hanya jika fail wujud dan sah
     if ($base64_file && $file_name) {
         $data["attachment"] = [["content" => $base64_file, "name" => $file_name]];
