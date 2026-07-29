@@ -61,28 +61,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($stmt->execute()) {
         $id_surat_baru = $stmt->insert_id; // Ambil ID rekod yang baru dimasukkan
 
-        // 5. Tentukan Halaman Dashboard Mengikut 3 Kategori Peranan Penerima
+      // 5. Tentukan Halaman Dashboard Mengikut Kategori Peranan Penerima (Lebih Fleksibel)
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
         $host = $_SERVER['HTTP_HOST'];
         
         $halaman_tujuan = ""; 
+        $role_bersih = strtolower(trim($target_role)); // Tukar jadi huruf kecil & buang jarak kosong
         
-        // Pemetaan kepada 3 fail dashboard berbeza
-        if ($target_role == 'Pengarah') {
-            $halaman_tujuan = "homedirector.php";
-        } elseif ($target_role == 'Timbalan Pengarah Pengurusan') {
+        // Semak variasi nama peranan
+        if (strpos($role_bersih, 'pengarah') !== false && strpos($role_bersih, 'pengurusan') !== false) {
             $halaman_tujuan = "hometpp.php";
-        } elseif ($target_role == 'Timbalan Pengarah Akademik') {
+        } elseif (strpos($role_bersih, 'pengarah') !== false && strpos($role_bersih, 'akademik') !== false) {
             $halaman_tujuan = "hometpa.php";
+        } elseif (strpos($role_bersih, 'pengarah') !== false) {
+            $halaman_tujuan = "homedirector.php";
         }
 
-        // Pastikan role sah sebelum meneruskan
+        // Jika masih kosong, papar nilai sebenar yang dihantar untuk tujuan debug
         if (empty($halaman_tujuan)) {
-            die("Ralat: Kategori peranan (target_role) tidak sah.");
+            die("Ralat: Kategori peranan ('$target_role') tidak sah atau tidak dijumpai dalam sistem.");
         }
 
         // Gabungkan URL lengkap berserta ID surat ke fail dashboard masing-masing
-        $link_sistem = $protocol . "://$host/$halaman_tujuan?id=" . $id_surat_baru; 
+        $link_sistem = $protocol . "://$host/$halaman_tujuan?id=" . $id_surat_baru;
 
         // 6. Integrasi API Brevo (E-mel dengan Butang Link Website Khusus)
         $api_key = getenv('BREVO_API_KEY');
