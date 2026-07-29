@@ -5,13 +5,18 @@ session_start();
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil input
-    $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan']);
-    $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima']);
-    $daripada = mysqli_real_escape_string($conn, $_POST['daripada']);
-    $perkara = mysqli_real_escape_string($conn, $_POST['perkara']);
-    $kolej = mysqli_real_escape_string($conn, $_POST['kolej']);
-    $target_role = mysqli_real_escape_string($conn, $_POST['target_role']);
+    // Semak jika data POST kosong disebabkan had saiz fail dilangkau
+    if (empty($_POST) && empty($_FILES)) {
+        die("Ralat: Saiz fail yang dimuat naik melebihi had yang dibenarkan oleh pelayan (Server POST limit). Sila besarkan nilai post_max_size di php.ini.");
+    }
+
+    // 1. Ambil input dengan selamat
+    $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan'] ?? '');
+    $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima'] ?? '');
+    $daripada = mysqli_real_escape_string($conn, $_POST['daripada'] ?? '');
+    $perkara = mysqli_real_escape_string($conn, $_POST['perkara'] ?? '');
+    $kolej = mysqli_real_escape_string($conn, $_POST['kolej'] ?? '');
+    $target_role = mysqli_real_escape_string($conn, $_POST['target_role'] ?? '');
     
     // 2. Dapatkan Emel Penerima
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
@@ -42,53 +47,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $http_code_drive = curl_getinfo($ch_drive, CURLINFO_HTTP_CODE);
         curl_close($ch_drive);
 
-        // Jika anda mahu debug respons sebenar dari Google, nyah-komen (remove //) 3 baris di bawah:
-        // echo "HTTP: $http_code_drive | Response: $drive_response"; exit;
-
         if ($http_code_drive == 200 && strpos($drive_response, 'ERROR') === false) {
             $drive_file_id = $drive_response;
         }
     }
 
-    // 4. Integrasi API Brevo (E-mel)
-    $api_key = getenv('BREVO_API_KEY');
-    
-    // Dapatkan URL asas laman web anda secara automatik atau letakkan link manual
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-    $host = $_SERVER['HTTP_HOST'];
-    // Contoh link direct ke halaman maklum/semakan berasaskan ID surat
-    $link_sistem = $protocol . "://$host/maklum.php?id=" . $id; 
-
-    $data = [
-        "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
-        "to" => [["email" => $email_penerima]],
-        "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
-        "htmlContent" => "
-            <p>Assalamualaikum wbt,</p>
-            <p>Terdapat surat baharu dengan no rujukan <b>{$no_rujukan}</b> untuk tindakan anda.</p>
-            <p>Sila klik pautan di bawah untuk melihat butiran dan memuat naik dokumen:</p>
-            <p><a href='{$link_sistem}' style='background: #f57c00; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Buka Sistem Minit</a></p>
-            <p>Sekian, terima kasih.</p>
-        "
-    ];
-    // Sertakan lampiran hanya jika fail wujud dan sah
-    if ($base64_file && $file_name) {
-        $data["attachment"] = [["content" => $base64_file, "name" => $file_name]];
-    }
-
-    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
-    curl_exec($ch);
-    curl_close($ch);
-
-    // 5. Simpan ke Database
+    // 4. Simpan ke Database dahulu untuk dapatkan ID surat
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
     $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
     
     if ($stmt->execute()) {
+        $id_surat_baru = $stmt->insert_id; // Dapatkan ID rekod yang baru dimasukkan
+
+        // 5. Integrasi API Brevo (E-mel) dengan ID yang betul
+        $api_key = getenv('BREVO_API_KEY');
+        
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+        $host = $_SERVER['HTTP_HOST'];
+        $link_sistem = $protocol . "://$host/maklum.php?id=" . $id_surat_baru; 
+
+        $data = [
+            "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
+            "to" => [["email" => $email_penerima]],
+            "subject" => "Notifikasi: Surat Baharu - " . $no_rujukan,
+            "htmlContent" => "
+                <p>Assalamualaikum wbt,</p>
+                <p>Terdapat surat baharu dengan no rujukan <b>{$no_rujukan}</b> untuk tindakan anda.</p>
+                <p>Sila klik pautan di bawah untuk melihat butiran dan memuat naik dokumen:</p>
+                <p><a href='{$link_sistem}' style='background: #f57c00; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Buka Sistem Minit</a></p>
+                <p>Sekian, terima kasih.</p>
+            "
+        ];
+        
+        if ($base64_file && $file_name) {
+            $data["attachment"] = [["content" => $base64_file, "name" => $file_name]];
+        }
+
+        $ch = curl_init('https://api.brevo.com/v3/smtp/email');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['api-key: ' . $api_key, 'Content-Type: application/json']);
+        curl_exec($ch);
+        curl_close($ch);
+
         echo "<script>alert('Surat telah didaftarkan! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
     } else {
         echo "Ralat Database: " . $stmt->error;
