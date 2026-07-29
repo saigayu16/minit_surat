@@ -47,17 +47,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // 4. Simpan ke Database Dahulu (Supaya kita dapat ID surat baru)
+    // 4. Simpan ke Database Dahulu (Supaya kita dapat ID surat untuk link website)
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
     $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
     
     if ($stmt->execute()) {
-        $id_surat_baru = $stmt->insert_id; // Ambil ID rekod yang baru dimasukkan
+        $id_surat_baru = $stmt->insert_id; // Ambil ID surat yang baru masuk
 
-        // 5. Integrasi API Brevo (E-mel dengan Butang & Pautan Sistem)
+        // 5. Integrasi API Brevo (E-mel dengan Butang Link Website)
         $api_key = getenv('BREVO_API_KEY');
         
-        // Dapatkan URL asal website secara automatik (cth: https://minitsurat-production.up.railway.app)
+        // Jana URL website secara automatik
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
         $host = $_SERVER['HTTP_HOST'];
         $link_sistem = $protocol . "://$host/maklum.php?id=" . $id_surat_baru; 
@@ -69,8 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             "htmlContent" => "
                 <p>Assalamualaikum wbt,</p>
                 <p>Terdapat surat baharu dengan no rujukan <b>{$no_rujukan}</b> untuk tindakan anda.</p>
-                <p>Sila klik pautan di bawah untuk melihat butiran dan menyemak surat:</p>
+                <p>Sila klik butang di bawah untuk melihat butiran dan menyemak surat di dalam sistem:</p>
                 <p><a href='{$link_sistem}' style='background: #f57c00; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Buka Sistem Minit</a></p>
+                <p>Atau salin pautan ini ke pelayar anda: <br><a href='{$link_sistem}'>{$link_sistem}</a></p>
                 <p>Sekian, terima kasih.</p>
             "
         ];
