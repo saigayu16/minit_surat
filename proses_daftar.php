@@ -5,7 +5,12 @@ session_start();
 include('db.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Ambil input
+    // Semak jika data POST kosong disebabkan had saiz fail pelayan dilangkau
+    if (empty($_POST) && empty($_FILES)) {
+        die("Ralat: Saiz fail yang dimuat naik melebihi had yang dibenarkan oleh pelayan (Server POST limit). Sila semak fail php.ini.");
+    }
+
+    // 1. Ambil input dengan selamat
     $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan'] ?? '');
     $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima'] ?? '');
     $daripada = mysqli_real_escape_string($conn, $_POST['daripada'] ?? '');
@@ -13,14 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $kolej = mysqli_real_escape_string($conn, $_POST['kolej'] ?? '');
     $target_role = mysqli_real_escape_string($conn, $_POST['target_role'] ?? '');
     
-    // 2. Dapatkan Emel Penerima
+    // 2. Dapatkan Emel Penerima Berdasarkan Role
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
     $stmt_email->bind_param("s", $target_role);
     $stmt_email->execute();
     $result = $stmt_email->get_result();
     $email_penerima = ($result->num_rows > 0) ? $result->fetch_assoc()['email'] : null;
     
-    if (!$email_penerima) die("Ralat: Tiada emel untuk role $target_role");
+    if (!$email_penerima) {
+        die("Ralat: Tiada emel didaftarkan untuk peranan (role) $target_role");
+    }
 
     // Tetapkan nilai awal
     $drive_file_id = "GAGAL_UPLOAD";
@@ -47,21 +54,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // 4. Simpan ke Database Dahulu (Supaya kita dapat ID surat untuk link)
+    // 4. Simpan ke Database Dahulu (Supaya kita dapat ID surat baru)
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
     $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
     
     if ($stmt->execute()) {
-        $id_surat_baru = $stmt->insert_id; // Ambil ID surat yang baru masuk
+        $id_surat_baru = $stmt->insert_id; // Ambil ID rekod yang baru dimasukkan
 
-        // 5. Tentukan Halaman Destinasi (Dashboard) Mengikut Role Penerima
+        // 5. Tentukan Halaman Dashboard Mengikut 3 Kategori Peranan Penerima
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
         $host = $_SERVER['HTTP_HOST'];
         
-        $halaman_tujuan = "maklum.php"; // Default fallback
+        $halaman_tujuan = ""; 
         
-        // Semak nilai target_role dan padankan dengan fail halaman masing-masing
-        // (Sila sesuaikan teks 'Pengarah', 'Timbalan Pengarah Pengurusan', dll mengikut nilai data dalam database anda)
+        // Pemetaan kepada 3 fail dashboard berbeza
         if ($target_role == 'Pengarah') {
             $halaman_tujuan = "homedirector.php";
         } elseif ($target_role == 'Timbalan Pengarah Pengurusan') {
@@ -70,7 +76,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $halaman_tujuan = "hometpa.php";
         }
 
-        // Gabungkan URL lengkap berserta ID surat
+        // Pastikan role sah sebelum meneruskan
+        if (empty($halaman_tujuan)) {
+            die("Ralat: Kategori peranan (target_role) tidak sah.");
+        }
+
+        // Gabungkan URL lengkap berserta ID surat ke fail dashboard masing-masing
         $link_sistem = $protocol . "://$host/$halaman_tujuan?id=" . $id_surat_baru; 
 
         // 6. Integrasi API Brevo (E-mel dengan Butang Link Website Khusus)
@@ -90,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             "
         ];
 
-        // Sertakan lampiran hanya jika fail wujud dan sah
+        // Sertakan lampiran PDF jika wujud
         if ($base64_file && $file_name) {
             $data["attachment"] = [["content" => $base64_file, "name" => $file_name]];
         }
@@ -103,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         curl_exec($ch);
         curl_close($ch);
 
-        echo "<script>alert('Surat telah didaftarkan dan e-mel berjaya dihantar ke role $target_role! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('Surat telah didaftarkan dan e-mel berjaya dihantar ke $target_role! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
     } else {
         echo "Ralat Database: " . $stmt->error;
     }
