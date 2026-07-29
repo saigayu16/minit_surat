@@ -9,10 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-       body { 
+        body { 
             font-family: 'Quicksand', sans-serif; 
-            /* Gantikan 'background-anda.jpg' dengan nama fail gambar anda */
-            background-image: url('daftarsurat.jpg'); 
+            /* Gabungan lapisan malap (overlay) dan gambar latar belakang anda */
+            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('daftarsurat.jpg'); 
             background-size: cover;          /* Gambar akan tutup seluruh skrin */
             background-position: center;     /* Gambar sentiasa di tengah */
             background-attachment: fixed;    /* Gambar tidak bergerak bila scroll */
@@ -24,6 +24,7 @@
             min-height: 100vh; 
             margin: 0; 
         }
+
         .box { 
             background: #fff9c4; /* Warna kuning sticky note */
             padding: 40px; 
@@ -79,10 +80,6 @@
             left: 50%;
             margin-left: -12.5px;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            
-        }
-        body {
-            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('background-anda.jpg');
         }
     </style>
 </head>
