@@ -106,8 +106,13 @@
             </div>
             
             <div class="form-group">
-                <label>Muat Naik Dokumen (Dokumen Asal & Minit Ceraian):</label>
-                <input type="file" name="dokumen_minit[]" accept=".pdf,.jpg,.png" multiple required>
+                <label>Dokumen Asal:</label>
+                <input type="file" name="dokumen_asal" accept=".pdf,.jpg,.png" required>
+            </div>
+
+            <div class="form-group">
+                <label>Borang Minit Ceraian:</label>
+                <input type="file" name="dokumen_minit" accept=".pdf,.jpg,.png" required>
             </div>
             
             <button type="submit">Hantar Sekarang!</button>
