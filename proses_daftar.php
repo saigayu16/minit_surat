@@ -61,29 +61,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($stmt->execute()) {
         $id_surat_baru = $stmt->insert_id; // Ambil ID rekod yang baru dimasukkan
 
-      // 5. Tentukan Halaman Dashboard Mengikut Kategori Peranan Penerima (Lebih Fleksibel)
+        // 5. Tentukan Halaman Dashboard Mengikut Logik Anda
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
         $host = $_SERVER['HTTP_HOST'];
         
         $halaman_tujuan = ""; 
-        $role_bersih = strtolower(trim($target_role)); // Tukar jadi huruf kecil & buang jarak kosong
+        $role = strtolower(trim($target_role)); // Tukar kepada huruf kecil untuk padanan selamat
         
-        // Semak variasi nama peranan
-        if (strpos($role_bersih, 'tpp') !== false && strpos($role_bersih, 'pengurusan') !== false) {
-            $halaman_tujuan = "hometpp.php";
-        } elseif (strpos($role_bersih, 'tpa') !== false && strpos($role_bersih, 'akademik') !== false) {
-            $halaman_tujuan = "hometpa.php";
-        } elseif (strpos($role_bersih, 'pengarah') !== false) {
-            $halaman_tujuan = "homedirector.php";
+        if (strpos($role, 'tpp') !== false) {
+            $halaman_tujuan = "hometpp.php"; // Timbalan Pengarah Pengurusan
+        } elseif (strpos($role, 'tpa') !== false) {
+            $halaman_tujuan = "hometpa.php"; // Timbalan Pengarah Akademik
+        } elseif (strpos($role, 'pengarah') !== false) {
+            $halaman_tujuan = "homedirector.php"; // Pengarah
         }
 
-        // Jika masih kosong, papar nilai sebenar yang dihantar untuk tujuan debug
+        // Pastikan role sah sebelum meneruskan
         if (empty($halaman_tujuan)) {
-            die("Ralat: Kategori peranan ('$target_role') tidak sah atau tidak dijumpai dalam sistem.");
+            die("Ralat: Kategori peranan ('$target_role') tidak sah.");
         }
 
-        // Gabungkan URL lengkap berserta ID surat ke fail dashboard masing-masing
-        $link_sistem = $protocol . "://$host/$halaman_tujuan?id=" . $id_surat_baru;
+        // Gabungkan URL lengkap berserta ID surat ke fail dashboard khusus masing-masing
+        $link_sistem = $protocol . "://$host/$halaman_tujuan?id=" . $id_surat_baru; 
 
         // 6. Integrasi API Brevo (E-mel dengan Butang Link Website Khusus)
         $api_key = getenv('BREVO_API_KEY');
@@ -115,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         curl_exec($ch);
         curl_close($ch);
 
-        echo "<script>alert('Surat telah didaftarkan dan e-mel berjaya dihantar ke $target_role! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('Surat telah didaftarkan dan e-mel berjaya dihantar! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
     } else {
         echo "Ralat Database: " . $stmt->error;
     }
