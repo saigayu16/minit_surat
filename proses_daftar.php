@@ -69,9 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $role_bersih = strtolower(trim($target_role)); // Tukar jadi huruf kecil & buang jarak kosong
         
         // Semak variasi nama peranan
-        if (strpos($role_bersih, 'pengarah') !== false && strpos($role_bersih, 'pengurusan') !== false) {
+        if (strpos($role_bersih, 'tpp') !== false && strpos($role_bersih, 'pengurusan') !== false) {
             $halaman_tujuan = "hometpp.php";
-        } elseif (strpos($role_bersih, 'pengarah') !== false && strpos($role_bersih, 'akademik') !== false) {
+        } elseif (strpos($role_bersih, 'tpa') !== false && strpos($role_bersih, 'akademik') !== false) {
             $halaman_tujuan = "hometpa.php";
         } elseif (strpos($role_bersih, 'pengarah') !== false) {
             $halaman_tujuan = "homedirector.php";
