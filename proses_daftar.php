@@ -47,21 +47,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // 4. Simpan ke Database Dahulu (Supaya kita dapat ID surat untuk link website)
+    // 4. Simpan ke Database Dahulu (Supaya kita dapat ID surat untuk link)
     $stmt = $conn->prepare("INSERT INTO minit_surat (no_rujukan, tarikh_terima, daripada, perkara, kolej, target_role, status, drive_file_id) VALUES (?, ?, ?, ?, ?, ?, 'BARU', ?)");
     $stmt->bind_param("sssssss", $no_rujukan, $tarikh_terima, $daripada, $perkara, $kolej, $target_role, $drive_file_id);
     
     if ($stmt->execute()) {
         $id_surat_baru = $stmt->insert_id; // Ambil ID surat yang baru masuk
 
-        // 5. Integrasi API Brevo (E-mel dengan Butang Link Website)
-        $api_key = getenv('BREVO_API_KEY');
-        
-        // Jana URL website secara automatik
+        // 5. Tentukan Halaman Destinasi (Dashboard) Mengikut Role Penerima
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
         $host = $_SERVER['HTTP_HOST'];
-        $link_sistem = $protocol . "://$host/maklum.php?id=" . $id_surat_baru; 
+        
+        $halaman_tujuan = "maklum.php"; // Default fallback
+        
+        // Semak nilai target_role dan padankan dengan fail halaman masing-masing
+        // (Sila sesuaikan teks 'Pengarah', 'Timbalan Pengarah Pengurusan', dll mengikut nilai data dalam database anda)
+        if ($target_role == 'Pengarah') {
+            $halaman_tujuan = "homedirector.php";
+        } elseif ($target_role == 'Timbalan Pengarah Pengurusan') {
+            $halaman_tujuan = "hometpp.php";
+        } elseif ($target_role == 'Timbalan Pengarah Akademik') {
+            $halaman_tujuan = "hometpa.php";
+        }
 
+        // Gabungkan URL lengkap berserta ID surat
+        $link_sistem = $protocol . "://$host/$halaman_tujuan?id=" . $id_surat_baru; 
+
+        // 6. Integrasi API Brevo (E-mel dengan Butang Link Website Khusus)
+        $api_key = getenv('BREVO_API_KEY');
+        
         $data = [
             "sender" => ["email" => "saigayu1605@gmail.com", "name" => "Sistem Minit Digital"],
             "to" => [["email" => $email_penerima]],
@@ -69,8 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             "htmlContent" => "
                 <p>Assalamualaikum wbt,</p>
                 <p>Terdapat surat baharu dengan no rujukan <b>{$no_rujukan}</b> untuk tindakan anda.</p>
-                <p>Sila klik butang di bawah untuk melihat butiran dan menyemak surat di dalam sistem:</p>
-                <p><a href='{$link_sistem}' style='background: #f57c00; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Buka Sistem Minit</a></p>
+                <p>Sila klik butang di bawah untuk masuk ke dashboard anda dan menyemak surat:</p>
+                <p><a href='{$link_sistem}' style='background: #f57c00; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Buka Dashboard Sistem</a></p>
                 <p>Atau salin pautan ini ke pelayar anda: <br><a href='{$link_sistem}'>{$link_sistem}</a></p>
                 <p>Sekian, terima kasih.</p>
             "
@@ -89,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         curl_exec($ch);
         curl_close($ch);
 
-        echo "<script>alert('Surat telah didaftarkan dan e-mel berjaya dihantar! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
+        echo "<script>alert('Surat telah didaftarkan dan e-mel berjaya dihantar ke role $target_role! (Drive ID: $drive_file_id)'); window.location='homeadmin.php';</script>";
     } else {
         echo "Ralat Database: " . $stmt->error;
     }
