@@ -81,7 +81,9 @@
             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
             
         }
-        background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('background-anda.jpg');
+        body {
+            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('background-anda.jpg');
+        }
     </style>
 </head>
 <body>
@@ -104,8 +106,8 @@
             </div>
             
             <div class="form-group">
-                <label>Muat Naik Minit:</label>
-                <input type="file" name="dokumen_minit" accept=".pdf,.jpg,.png" required>
+                <label>Muat Naik Dokumen (Dokumen Asal & Minit Ceraian):</label>
+                <input type="file" name="dokumen_minit[]" accept=".pdf,.jpg,.png" multiple required>
             </div>
             
             <button type="submit">Hantar Sekarang!</button>
