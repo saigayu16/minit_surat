@@ -91,12 +91,17 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         
         <div class="sticky-note-box">
             <h4 style="margin: 0 0 10px 0; color: #1e293b;"><i class="fa-solid fa-clipboard-check" style="color: #2563eb;"></i> Arahan Minit</h4>
-            <div class="arahan-grid">
-                <label><input type="checkbox" name="arahan" value="Untuk Tindakan"> <i class="fa-solid fa-bolt" style="color: #ea580c;"></i> Untuk Tindakan</label>
-                <label><input type="checkbox" name="arahan" value="Untuk Makluman"> <i class="fa-solid fa-circle-info" style="color: #0891b2;"></i> Untuk Makluman</label>
-                <label><input type="checkbox" name="arahan" value="Sila Hadir"> <i class="fa-solid fa-calendar-check" style="color: #059669;"></i> Sila Hadir</label>
-                <label><input type="checkbox" name="arahan" value="Untuk Simpanan"> <i class="fa-solid fa-box-archive" style="color: #64748b;"></i> Untuk Simpanan</label>
-            </div>
+           <div class="pejabat-header" style="text-align: center; margin-bottom: 20px; font-weight: 700; color: var(--text-main);">
+    PEJABAT PENGARAH<br>KOLEJ KOMUNITI KEPALA BATAS
+</div>
+<div class="arahan-grid">
+    <label><input type="checkbox" name="arahan" value="Untuk Tindakan"> <i class="fa-solid fa-bolt" style="color: #ea580c;"></i> Untuk Tindakan</label>
+    <label><input type="checkbox" name="arahan" value="Untuk Makluman"> <i class="fa-solid fa-circle-info" style="color: #0891b2;"></i> Untuk Makluman</label>
+    <label><input type="checkbox" name="arahan" value="Sila Hadir"> <i class="fa-solid fa-calendar-check" style="color: #059669;"></i> Sila Hadir</label>
+    <label><input type="checkbox" name="arahan" value="Untuk Simpanan"> <i class="fa-solid fa-box-archive" style="color: #64748b;"></i> Untuk Simpanan</label>
+    <label><input type="checkbox" name="arahan" value="Untuk Pertimbangan / Kajian"> <i class="fa-solid fa-magnifying-glass-chart" style="color: #7c3aed;"></i> Untuk Pertimbangan / Kajian</label>
+    <label><input type="checkbox" name="arahan" value="Untuk Simpanan Fail"> <i class="fa-solid fa-folder-closed" style="color: #d97706;"></i> Untuk Simpanan Fail</label>
+</div>
         </div>
 
         <p>Sila turunkan tandatangan digital di bawah:</p>
