@@ -34,13 +34,31 @@ $signature_data = $row['tandatangan'];
     <style>
         /* Background Image Setting */
         body { 
-            margin: 0; padding: 20px; 
-            background-image: url('daftarsurat.jpg'); /* Pastikan fail gambar ada di folder yang sama */
+            margin: 0; 
+            padding: 20px; 
+            font-family: 'Segoe UI', sans-serif; 
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('daftarsurat.jpg'); 
             background-size: cover; 
             background-position: center; 
             background-attachment: fixed; 
             background-repeat: no-repeat;
-            font-family: 'Segoe UI', sans-serif; 
+            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
+            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
+            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
         }
         
         .page-box { 
@@ -66,13 +84,13 @@ $signature_data = $row['tandatangan'];
         .stamp-box::before { content: "TANDATANGAN RASMI"; position: absolute; top: -12px; background: white; padding: 0 5px; font-size: 9px; font-weight: bold; color: #1e293b; }
         .sig-image { max-height: 60px; display: block; margin: 0 auto 5px auto; }
 
-        .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; }
+        .btn-container { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 10px; z-index: 100; }
         .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; text-decoration: none; display: inline-block; }
         .btn-print { background: #0f172a; color: white; }
         .btn-back { background: #e2e8f0; color: #475569; }
         .btn-action:hover { transform: scale(1.05); }
 
-        @media print { .no-print { display: none !important; } body { background: white; } .page-box { box-shadow: none; border: none; margin: 0 auto; } }
+        @media print { .no-print { display: none !important; } body::before { display: none; } body { background: white; } .page-box { box-shadow: none; border: none; margin: 0 auto; } }
     </style>
 </head>
 <body>
