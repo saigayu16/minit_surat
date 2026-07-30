@@ -32,14 +32,29 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
 
         body { 
             font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            padding: 40px 20px;
+            color: var(--text-main);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('daftarsurat.jpg'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             background-repeat: no-repeat;
-            margin: 0; 
-            padding: 40px 20px;
-            color: var(--text-main);
+            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
+            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
+            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
         }
 
         .form-container { 
