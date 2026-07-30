@@ -30,7 +30,30 @@ if (!empty($row['fail_surat']) && file_exists($fail_tempatan)) {
     <meta charset="UTF-8">
     <title>Paparan Rasmi - <?= htmlspecialchars($row['no_rujukan']) ?></title>
     <style>
-        body { background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('background.jpg'); background-size: cover; background-position: center; font-family: 'Segoe UI', sans-serif; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('background.jpg'); 
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
+            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
+            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
+        }
+
         .wrapper { max-width: 1200px; margin: auto; display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; }
         .card { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
         .info-row { display: flex; margin-bottom: 10px; }
