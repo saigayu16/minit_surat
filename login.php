@@ -29,9 +29,41 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log Masuk - Sistem Minit Digital</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('backgroundkkkb.jpg') no-repeat center center fixed; background-size: cover; }
-        .login-card { background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 380px; text-align: center; }
+   <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('backgroundkkkb.jpg') no-repeat center center fixed;
+            background-size: cover;
+            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
+            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
+            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
+        }
+
+        .login-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
+            width: 380px; 
+            text-align: center; 
+        }
         
         /* Gaya Logo */
         .logo-container { margin-bottom: 20px; }
@@ -61,7 +93,7 @@ if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) 
         .btn-register:hover { background: #059669; }
         
         h2 { color: #0f172a; margin-bottom: 25px; }
-    </style>
+</style>
 </head>
 <body>
     <div class="login-card">
