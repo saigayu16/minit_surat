@@ -25,13 +25,31 @@ if (!$surat) { die("Dokumen tidak ditemui"); }
         body { 
             font-family: 'Segoe UI', sans-serif; 
             padding: 20px;
-            /* Bahagian yang ditambah */
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('homedirector.jpg'); 
             background-repeat: no-repeat;
             background-size: cover;
             background-attachment: fixed;
             background-position: center center;
+            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
+            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
+            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
         }
+
         .container { max-width: 1000px; margin: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .sticky-note { background: #fef08a; padding: 15px; border-radius: 4px; box-shadow: 3px 3px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
