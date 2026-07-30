@@ -288,7 +288,7 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
             <a href="https://docs.google.com/document/u/0/?ftv=1&tgif=d" target="_blank" class="btn-docs">
                <form action="" method="POST">
     <button type="submit" class="btn-action btn-sign" style="border: none; cursor: pointer;">
-        <i class="fa-solid fa-file-invoice"></i>
+        <i class="fa-solid fa-plus"></i>
     </button>
 </form>
             </a>
