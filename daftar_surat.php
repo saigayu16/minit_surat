@@ -286,7 +286,11 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
                 Bina surat rasmi baru secara terus di Google Docs.
             </div>
             <a href="https://docs.google.com/document/u/0/?ftv=1&tgif=d" target="_blank" class="btn-docs">
-                <i class="fa-solid fa-file-word"></i> Tulis Surat Baru
+               <form action="" method="POST">
+    <button type="submit" class="btn-action btn-sign" style="border: none; cursor: pointer;">
+        <i class="fa-solid fa-file-invoice"></i>
+    </button>
+</form>
             </a>
         </div>
 
