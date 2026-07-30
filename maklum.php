@@ -11,18 +11,31 @@
     <style>
         body { 
             font-family: 'Quicksand', sans-serif; 
-            /* Gabungan lapisan malap (overlay) dan gambar latar belakang anda */
-            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('daftarsurat.jpg'); 
-            background-size: cover;          /* Gambar akan tutup seluruh skrin */
-            background-position: center;     /* Gambar sentiasa di tengah */
-            background-attachment: fixed;    /* Gambar tidak bergerak bila scroll */
-            background-repeat: no-repeat;
-            
             display: flex; 
             justify-content: center; 
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('daftarsurat.jpg'); 
+            background-size: cover;         /* Gambar akan tutup seluruh skrin */
+            background-position: center;     /* Gambar sentiasa di tengah */
+            background-attachment: fixed;    /* Gambar tidak bergerak bila scroll */
+            background-repeat: no-repeat;
+            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
+            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
+            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
         }
 
         .box { 
