@@ -60,14 +60,30 @@ if($count_all) $total_semua = $count_all->fetch_assoc()['total'];
 
         body { 
             font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            padding: 0;
+            color: var(--text-main);
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('homedirector.jpg'); 
             background-repeat: no-repeat;
             background-size: cover;
             background-attachment: fixed;
             background-position: center center;
-            margin: 0; 
-            padding: 0;
-            color: var(--text-main);
+            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
+            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
+            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
         }
 
         /* Navbar Gaya Eksekutif */
