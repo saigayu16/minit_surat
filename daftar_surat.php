@@ -52,9 +52,9 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
             background-position: center;
             background-attachment: fixed;
             background-repeat: no-repeat;
-            filter: blur(8px); /* Ubah nilai 8px ini jika mahu lebih atau kurang kabur */
-            transform: scale(1.1); /* Mengelakkan kesan putih di tepi akibat blur */
-            z-index: -1; /* Memastikan latar belakang berada di lapisan paling bawah */
+            filter: blur(8px);
+            transform: scale(1.1);
+            z-index: -1;
         }
 
         .form-container { 
@@ -98,7 +98,6 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
             color: #ca8a04;
         }
 
-        /* 🛠️ Gaya Kotak Tindakan Pantas (Google Docs Button) */
         .action-box {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(5px);
@@ -286,11 +285,7 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
                 Bina surat rasmi baru secara terus di Google Docs.
             </div>
             <a href="https://docs.google.com/document/u/0/?ftv=1&tgif=d" target="_blank" class="btn-docs">
-               <form action="" method="POST">
-    <button type="submit" class="btn-action btn-sign" style="border: none; cursor: pointer;">
-        <i class="fa-solid fa-plus"></i>
-    </button>
-</form>
+                <i class="fa-solid fa-plus"></i> Buka Google Docs
             </a>
         </div>
 
@@ -330,20 +325,30 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
                     <input type="text" name="daripada" placeholder="Nama agensi, syarikat atau individu" required>
                 </div>
             </div>
+
             <div class="form-group">
-                            <label>Hantar Kepada:</label>
-            <select name="target_role" required>
-                <option value="pengarah">Pengarah</option>
-                <option value="tpp">Timbalan Pengarah Pengurusan (TPP)</option>
-                <option value="tpa">Timbalan Pengarah Akademik (TPA)</option>
-            </select>
-    
+                <label>Hantar Kepada:</label>
+                <select name="target_role" required>
+                    <option value="pengarah">Pengarah</option>
+                    <option value="tpp">Timbalan Pengarah Pengurusan (TPP)</option>
+                    <option value="tpa">Timbalan Pengarah Akademik (TPA)</option>
+                </select>
             </div>
+
             <div class="form-group">
                 <label>Tarikh Terima:</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-calendar-days"></i>
                     <input type="date" name="tarikh_terima" required>
+                </div>
+            </div>
+
+            <!-- Medan Tarikh Surat (Ditambah di bawah Tarikh Terima) -->
+            <div class="form-group">
+                <label>Tarikh Surat:</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <input type="date" name="tarikh_surat" required>
                 </div>
             </div>
 
