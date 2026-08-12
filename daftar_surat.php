@@ -39,7 +39,6 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
             overflow-x: hidden;
         }
 
-        /* Lapisan khas untuk imej latar belakang dengan kesan blur */
         body::before {
             content: '';
             position: fixed;
@@ -278,7 +277,7 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
             </div>
         </div>
 
-        <!-- 🛠️ BAHAGIAN BARU: Butang Tindakan Pantas Ke Google Docs -->
+        <!-- Butang Tindakan Pantas Ke Google Docs -->
         <div class="action-box">
             <div class="action-text">
                 <strong>Belum ada fail surat fizikal?</strong>
@@ -343,7 +342,6 @@ $admin_name = $_SESSION['user_name'] ?? 'Admin Sistem';
                 </div>
             </div>
 
-            <!-- Medan Tarikh Surat (Ditambah di bawah Tarikh Terima) -->
             <div class="form-group">
                 <label>Tarikh Surat:</label>
                 <div class="input-wrapper">
