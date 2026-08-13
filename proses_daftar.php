@@ -10,13 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("Ralat: Saiz fail yang dimuat naik melebihi had yang dibenarkan oleh pelayan (Server POST limit). Sila semak fail php.ini.");
     }
 
-    // 1. Ambil input dengan selamat
-    $no_rujukan = mysqli_real_escape_string($conn, $_POST['no_rujukan'] ?? '');
+    // 1. Ambil input dengan selamat dan HADKAN panjang aksara 
+    // Nilai (50 atau 255) di bawah menghalang teks daripada melepasi had pangkalan data
+    $no_rujukan = substr(mysqli_real_escape_string($conn, $_POST['no_rujukan'] ?? ''), 0, 50);
     $tarikh_terima = mysqli_real_escape_string($conn, $_POST['tarikh_terima'] ?? '');
-    $daripada = mysqli_real_escape_string($conn, $_POST['daripada'] ?? '');
-    $perkara = mysqli_real_escape_string($conn, $_POST['perkara'] ?? '');
-    $kolej = mysqli_real_escape_string($conn, $_POST['kolej'] ?? '');
-    $target_role = mysqli_real_escape_string($conn, $_POST['target_role'] ?? '');
+    $daripada = substr(mysqli_real_escape_string($conn, $_POST['daripada'] ?? ''), 0, 255);
+    $perkara = substr(mysqli_real_escape_string($conn, $_POST['perkara'] ?? ''), 0, 255);
+    $kolej = substr(mysqli_real_escape_string($conn, $_POST['kolej'] ?? ''), 0, 50);
+    $target_role = substr(mysqli_real_escape_string($conn, $_POST['target_role'] ?? ''), 0, 50);
     
     // 2. Dapatkan Emel Penerima Berdasarkan Role
     $stmt_email = $conn->prepare("SELECT email FROM users WHERE role = ? LIMIT 1");
